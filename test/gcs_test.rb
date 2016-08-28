@@ -1,4 +1,4 @@
-require "test_helper"
+require_relative "test_helper"
 require "shrine/storage/linter"
 
 describe Shrine::Storage::GCS do
@@ -17,15 +17,21 @@ describe Shrine::Storage::GCS do
   end
 
   it "passes the linter" do
-    Shrine::Storage::Linter.new(@gcs).call(-> { image })
+    Shrine::Storage::Linter.new(gcs).call(-> { image })
   end
-  #
-  # describe "#download" do
-  #   it "preserves the extension" do
-  #     @gridfs.upload(fakeio, id = "foo.jpg")
-  #     tempfile = @gridfs.download(id)
-  #
-  #     assert_equal ".jpg", File.extname(tempfile.path)
-  #   end
-  # end
+
+  it "passes the linter with prefix" do
+    Shrine::Storage::Linter.new(gcs(prefix: 'pre')).call(-> { image })
+  end
+
+  describe "clear!" do
+    it "does not empty the whole bucket when a prefix is set" do
+      gcs_with_prefix = gcs(prefix: 'pre')
+      @gcs.upload(image, 'foo')
+      @gcs.upload(image, 'pre') # to ensure a file with the prefix name is not deleted
+      gcs_with_prefix.clear!
+      assert @gcs.exists?('foo')
+      assert @gcs.exists?('pre')
+    end
+  end
 end
