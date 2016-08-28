@@ -12,6 +12,8 @@ require "stringio"
 
 Dotenv.load!
 
+Google::Apis.logger.level = Logger::DEBUG if ENV['GCS_DEBUG'] == 'true'
+
 class FakeIO
   def initialize(content)
     @io = StringIO.new(content)

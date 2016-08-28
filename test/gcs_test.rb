@@ -13,7 +13,7 @@ describe Shrine::Storage::GCS do
   end
 
   after do
-    #@gcs.clear!
+    @gcs.clear!
   end
 
   it "passes the linter" do

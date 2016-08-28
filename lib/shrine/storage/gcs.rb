@@ -53,6 +53,36 @@ class Shrine
         storage_api.delete_object(@bucket_name, id)
       end
 
+      def multi_delete(ids)
+        storage_api.batch do |storage|
+          ids.each do |id|
+            storage.delete_object(@bucket_name, id)
+          end
+        end
+      end
+
+      def clear!
+        ids = []
+        storage_api.fetch_all do |token, s|
+          s.list_objects(
+            @bucket_name,
+            fields: "items/name",
+            page_token: token,
+          )
+        end.each do |object|
+          ids << object.name
+
+          if ids.size >= 100
+            # Batches are limited to 100, so we execute it and reset the ids
+            multi_delete(ids)
+            ids = []
+          end
+        end
+
+        # We delete the remaining ones
+        multi_delete(ids) if ids.size > 0
+      end
+
       private
 
       def storage_api
