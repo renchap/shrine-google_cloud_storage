@@ -5,8 +5,12 @@ require "minitest/pride"
 
 require "shrine/storage/gcs"
 
+require "dotenv"
+
 require "forwardable"
 require "stringio"
+
+Dotenv.load!
 
 class FakeIO
   def initialize(content)

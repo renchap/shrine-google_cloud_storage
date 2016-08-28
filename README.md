@@ -14,7 +14,7 @@ gem "shrine-gcs"
 
 ## Authentication
 
-The GCS plugin uses Google's [Application Default Credentials]. Please check Google's
+The GCS plugin uses Google's [Application Default Credentials]. Please check
 documentation for the various ways to provide credentials.
 
 ## Usage
@@ -23,14 +23,14 @@ documentation for the various ways to provide credentials.
 require "shrine/storage/gcs"
 
 Shrine.storages = {
-  cache: Shrine::Storage::GCS.new(bucket: "cache"), # for direct uploads
+  cache: Shrine::Storage::GCS.new(bucket: "cache"),
   store: Shrine::Storage::GCS.new(bucket: "store"),
 }
 ```
 
 ## Contributing
 
-Firstly you need to create an `.env` file with a dedicaced GCS bucket:
+Firstly you need to create an `.env` file with a dedicated GCS bucket:
 
 ```sh
 # .env
@@ -49,6 +49,6 @@ $ bundle exec rake test
 
 [MIT](http://opensource.org/licenses/MIT)
 
-[GCS]: https://cloud.google.com/storage/
+[Google Cloud Storage]: https://cloud.google.com/storage/
 [Shrine]: https://github.com/janko-m/shrine
 [Application Default Credentials]: https://developers.google.com/identity/protocols/application-default-credentials
