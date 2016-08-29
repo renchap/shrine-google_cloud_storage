@@ -1,4 +1,4 @@
-# Shrine::Storage::GCS
+# Shrine::Storage::GoogleCloudStorage
 
 Provides [Google Cloud Storage] (GCS) storage for [Shrine].
 
