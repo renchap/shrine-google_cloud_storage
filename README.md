@@ -1,15 +1,11 @@
 # Shrine::Storage::GCS
 
-Provides [Google Cloud Storage] storage for [Shrine].
-
-Cloudinary provides storage and advanced processing for images and videos, both
-on-demand and on upload, automatic and intelligent responsive breakpoints, and
-an HTML widget for direct uploads.
+Provides [Google Cloud Storage] (GCS) storage for [Shrine].
 
 ## Installation
 
 ```ruby
-gem "shrine-gcs"
+gem "shrine-google_cloud_storage"
 ```
 
 ## Authentication
@@ -23,8 +19,8 @@ documentation for the various ways to provide credentials.
 require "shrine/storage/gcs"
 
 Shrine.storages = {
-  cache: Shrine::Storage::GCS.new(bucket: "cache"),
-  store: Shrine::Storage::GCS.new(bucket: "store"),
+  cache: Shrine::Storage::GoogleCloudStorage.new(bucket: "cache"),
+  store: Shrine::Storage::GoogleCloudStorage.new(bucket: "store"),
 }
 ```
 

@@ -3,7 +3,7 @@ require "bundler/setup"
 require "minitest/autorun"
 require "minitest/pride"
 
-require "shrine/storage/gcs"
+require "shrine/storage/google_cloud_storage"
 
 require "dotenv"
 

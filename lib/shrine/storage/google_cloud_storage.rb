@@ -4,7 +4,7 @@ require "google/apis/storage_v1"
 
 class Shrine
   module Storage
-    class GCS
+    class GoogleCloudStorage
       attr_reader :bucket, :prefix, :host
 
       def initialize(bucket:, prefix: nil, host: nil)

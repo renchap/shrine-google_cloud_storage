@@ -1,11 +1,11 @@
 require_relative "test_helper"
 require "shrine/storage/linter"
 
-describe Shrine::Storage::GCS do
+describe Shrine::Storage::GoogleCloudStorage do
   def gcs(options = {})
     options[:bucket] ||= ENV.fetch("GCS_BUCKET")
 
-    Shrine::Storage::GCS.new(options)
+    Shrine::Storage::GoogleCloudStorage.new(options)
   end
 
   before do
