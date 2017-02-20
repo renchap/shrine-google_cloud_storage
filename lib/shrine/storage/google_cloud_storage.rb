@@ -13,16 +13,25 @@ class Shrine
         @host = host
       end
 
-      def upload(io, id, shrine_metadata: {}, **options)
+      def upload(io, id, shrine_metadata: {}, **_options)
         # uploads `io` to the location `id`
-        storage_api.insert_object(@bucket, { name: object_name(id) }, content_type: shrine_metadata["mime_type"],
-                                                                      upload_source: io,
-                                                                      options: { uploadType: 'multipart' })
+
+        if copyable?(io)
+          storage_api.copy_object(io.storage.bucket, io.storage.object_name(io.id), @bucket, object_name(id))
+        else
+          storage_api.insert_object(
+            @bucket,
+            { name: object_name(id) },
+            content_type: shrine_metadata["mime_type"],
+            upload_source: io.to_io,
+            options: { uploadType: 'multipart' },
+          )
+        end
       end
 
-      def url(id, **options)
+      def url(id, **_options)
         # URL to the remote file, accepts options for customizing the URL
-        host = @host || "#{@bucket}.storage.googleapis.com"
+        host = @host || "storage.googleapis.com/#{@bucket}"
 
         "https://#{host}/#{object_name(id)}"
       end
@@ -58,6 +67,12 @@ class Shrine
       def delete(id)
         # deletes the file from the storage
         storage_api.delete_object(@bucket, object_name(id))
+
+      rescue Google::Apis::ClientError => e
+        # The object does not exist, Shrine expects us to be ok
+        return true if e.status_code == 404
+
+        raise e
       end
 
       def multi_delete(ids)
@@ -89,10 +104,39 @@ class Shrine
         batch_delete(ids) unless ids.empty?
       end
 
-      private
+      def presign(id, **options)
+        method = options[:method] || "GET"
+        content_md5 = options[:content_md5] || ""
+        content_type = options[:content_type] || ""
+        expires = (Time.now.utc + (options[:expires] || 300)).to_i
+        headers = nil
+        path = "/#{@bucket}/" + object_name(id)
+
+        to_sign = [method, content_md5, content_type, expires, headers, path].compact.join("\n")
+
+        signing_key = options[:signing_key]
+        signing_key = OpenSSL::PKey::RSA.new(signing_key) unless signing_key.respond_to?(:sign)
+        signature = Base64.strict_encode64(signing_key.sign(OpenSSL::Digest::SHA256.new, to_sign)).delete("\n")
+
+        signed_url = "https://storage.googleapis.com#{path}?GoogleAccessId=#{options[:issuer]}" \
+          "&Expires=#{expires}&Signature=#{CGI.escape(signature)}"
+
+        OpenStruct.new(
+          url: signed_url,
+          fields: {},
+        )
+      end
 
       def object_name(id)
         @prefix ? "#{@prefix}/#{id}" : id
+      end
+
+      private
+
+      def copyable?(io)
+        io.is_a?(UploadedFile) &&
+          io.storage.is_a?(Storage::GoogleCloudStorage)
+        # TODO: add a check for the credentials
       end
 
       def batch_delete(object_names)
