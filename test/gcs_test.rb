@@ -1,6 +1,7 @@
 require_relative "test_helper"
 require "shrine/storage/linter"
 require "date"
+require "net/https"
 
 describe Shrine::Storage::GoogleCloudStorage do
   def gcs(options = {})
@@ -33,6 +34,9 @@ wXh0ExlzwgD2xJ0=
 
   before do
     @gcs = gcs
+    shrine = Class.new(Shrine)
+    shrine.storages = { gcs: @gcs }
+    @uploader = shrine.new(:gcs)
   end
 
   after do
@@ -45,6 +49,45 @@ wXh0ExlzwgD2xJ0=
 
   it "passes the linter with prefix" do
     Shrine::Storage::Linter.new(gcs(prefix: 'pre')).call(-> { image })
+  end
+
+  describe "default_acl" do
+    it "does set default acl when uploading a new object" do
+      gcs = gcs(default_acl: 'publicRead')
+      gcs.upload(image, 'foo')
+
+      url = URI(gcs.url('foo'))
+      Net::HTTP.start(url.host, url.port, use_ssl: true) do |http|
+        response = http.head(url.path)
+
+        assert_equal "200", response.code
+      end
+
+      assert @gcs.exists?('foo')
+    end
+
+    it "does set default acl when copying an object" do
+      gcs = gcs(default_acl: 'publicRead')
+      object = @uploader.upload(image, location: 'foo')
+
+      gcs.upload(object, 'bar')
+
+      # foo needs to not be readable
+      url_foo = URI(gcs.url('foo'))
+      Net::HTTP.start(url_foo.host, url_foo.port, use_ssl: true) do |http|
+        response = http.head(url_foo.path)
+        assert_equal "403", response.code
+      end
+
+      # bar needs to be readable
+      url_bar = URI(gcs.url('bar'))
+      Net::HTTP.start(url_bar.host, url_bar.port, use_ssl: true) do |http|
+        response = http.head(url_bar.path)
+        assert_equal "200", response.code
+      end
+
+      assert @gcs.exists?('foo')
+    end
   end
 
   describe "clear!" do

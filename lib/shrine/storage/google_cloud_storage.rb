@@ -7,24 +7,34 @@ class Shrine
     class GoogleCloudStorage
       attr_reader :bucket, :prefix, :host
 
-      def initialize(bucket:, prefix: nil, host: nil)
+      def initialize(bucket:, prefix: nil, host: nil, default_acl: nil)
         @bucket = bucket
         @prefix = prefix
         @host = host
+        @default_acl = default_acl
       end
 
       def upload(io, id, shrine_metadata: {}, **_options)
         # uploads `io` to the location `id`
 
         if copyable?(io)
-          storage_api.copy_object(io.storage.bucket, io.storage.object_name(io.id), @bucket, object_name(id))
+          storage_api.copy_object(
+            io.storage.bucket,
+            io.storage.object_name(io.id),
+            @bucket,
+            object_name(id),
+            destination_predefined_acl: @default_acl,
+          )
         else
           storage_api.insert_object(
             @bucket,
-            { name: object_name(id) },
+            {
+              name: object_name(id),
+            },
             content_type: shrine_metadata["mime_type"],
             upload_source: io.to_io,
             options: { uploadType: 'multipart' },
+            predefined_acl: @default_acl,
           )
         end
       end
