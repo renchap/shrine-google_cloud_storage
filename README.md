@@ -24,6 +24,19 @@ Shrine.storages = {
 }
 ```
 
+You can set a predefined ACL on created objects, as well as custom headers using the `object_options` parameter:
+
+```rb
+Shrine::Storage::GoogleCloudStorage.new(
+  bucket: "store",
+  default_acl: 'publicRead',
+  object_options: {
+    cache_control: 'public, max-age: 7200'
+  },
+)
+```
+
+
 ## Contributing
 
 Firstly you need to create an `.env` file with a dedicated GCS bucket:

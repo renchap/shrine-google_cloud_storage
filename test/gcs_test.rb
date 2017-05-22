@@ -90,6 +90,41 @@ wXh0ExlzwgD2xJ0=
     end
   end
 
+  describe "object_options" do
+    it "does set the Cache-Control header when uploading a new object" do
+      cache_control = 'public, max-age=7200'
+      gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
+      gcs.upload(image, 'foo')
+
+      assert @gcs.exists?('foo')
+
+      url = URI(gcs.url('foo'))
+      Net::HTTP.start(url.host, url.port, use_ssl: true) do |http|
+        response = http.head(url.path)
+        assert_equal "200", response.code
+        assert_equal 1, response.get_fields('Cache-Control').size
+        assert_equal cache_control, response.get_fields('Cache-Control')[0]
+      end
+    end
+
+    it "does set the configured Cache-Control header when copying an object" do
+      cache_control = 'public, max-age=7200'
+      gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
+      object = @uploader.upload(image, location: 'foo')
+
+      gcs.upload(object, 'bar')
+
+      # bar needs to have the correct Cache-Control header
+      url_bar = URI(gcs.url('bar'))
+      Net::HTTP.start(url_bar.host, url_bar.port, use_ssl: true) do |http|
+        response = http.head(url_bar.path)
+        assert_equal "200", response.code
+        assert_equal 1, response.get_fields('Cache-Control').size
+        assert_equal cache_control, response.get_fields('Cache-Control')[0]
+      end
+    end
+  end
+
   describe "clear!" do
     it "does not empty the whole bucket when a prefix is set" do
       gcs_with_prefix = gcs(prefix: 'pre')
