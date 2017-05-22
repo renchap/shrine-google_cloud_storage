@@ -1,3 +1,5 @@
+[![Gem Version](https://badge.fury.io/rb/shrine-google_cloud_storage.svg)](https://badge.fury.io/rb/shrine-google_cloud_storage)
+
 # Shrine::Storage::GoogleCloudStorage
 
 Provides [Google Cloud Storage] (GCS) storage for [Shrine].
