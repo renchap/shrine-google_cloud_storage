@@ -92,9 +92,7 @@ class Shrine
       end
 
       def clear!
-        ids = []
-
-        storage_api.fetch_all do |token, s|
+        all_objects = storage_api.fetch_all do |token, s|
           prefix = "#{@prefix}/" if @prefix
           s.list_objects(
             @bucket,
@@ -102,18 +100,11 @@ class Shrine
             fields: "items/name",
             page_token: token,
           )
-        end.each do |object|
-          ids << object.name
-
-          if ids.size >= 100
-            # Batches are limited to 100, so we execute it and reset the ids
-            batch_delete(ids)
-            ids = []
-          end
         end
 
-        # We delete the remaining ones
-        batch_delete(ids) unless ids.empty?
+        all_objects.each_slice(100) do |objects|
+          batch_delete(objects.map(&:name))
+        end
       end
 
       def presign(id, **options)
