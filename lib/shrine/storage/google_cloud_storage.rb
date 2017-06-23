@@ -102,9 +102,7 @@ class Shrine
           )
         end
 
-        all_objects.each_slice(100) do |objects|
-          batch_delete(objects.map(&:name))
-        end
+        batch_delete(all_objects.lazy.map(&:name))
       end
 
       def presign(id, **options)
@@ -143,9 +141,12 @@ class Shrine
       end
 
       def batch_delete(object_names)
-        storage_api.batch do |storage|
-          object_names.each do |name|
-            storage.delete_object(@bucket, name)
+        # Batches are limited to 100 operations
+        object_names.each_slice(100) do |names|
+          storage_api.batch do |storage|
+            names.each do |name|
+              storage.delete_object(@bucket, name)
+            end
           end
         end
       end
