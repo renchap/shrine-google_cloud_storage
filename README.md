@@ -18,7 +18,7 @@ documentation for the various ways to provide credentials.
 ## Usage
 
 ```rb
-require "shrine/storage/gcs"
+require "shrine/storage/google_cloud_storage"
 
 Shrine.storages = {
   cache: Shrine::Storage::GoogleCloudStorage.new(bucket: "cache"),
