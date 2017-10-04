@@ -125,6 +125,42 @@ wXh0ExlzwgD2xJ0=
     end
   end
 
+  describe "upload_options" do
+    it "overrides default_acl" do
+      gcs = gcs(default_acl: 'private')
+      upload_options = { acl: "publicRead" }
+      gcs.upload(image, 'foo', shrine_metadata: {}, **upload_options)
+
+      url = URI(gcs.url('foo'))
+      Net::HTTP.start(url.host, url.port, use_ssl: true) do |http|
+        response = http.head(url.path)
+
+        assert_equal "200", response.code
+      end
+
+      assert @gcs.exists?('foo')
+    end
+
+    it "overrides object_options' Cache-Control" do
+      gcs = gcs(default_acl: 'private')
+      cache_control = 'public, max-age=7200'
+      gcs.upload(image,
+                 'foo',
+                 shrine_metadata: {},
+                 acl: 'publicRead', object_options: { cache_control: cache_control })
+
+      assert @gcs.exists?('foo')
+
+      url = URI(gcs.url('foo'))
+      Net::HTTP.start(url.host, url.port, use_ssl: true) do |http|
+        response = http.head(url.path)
+        assert_equal "200", response.code
+        assert_equal 1, response.get_fields('Cache-Control').size
+        assert_equal cache_control, response.get_fields('Cache-Control')[0]
+      end
+    end
+  end
+
   describe "clear!" do
     it "does not empty the whole bucket when a prefix is set" do
       gcs_with_prefix = gcs(prefix: 'pre')

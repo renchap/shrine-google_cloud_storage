@@ -15,11 +15,10 @@ class Shrine
         @object_options = object_options
       end
 
-      def upload(io, id, shrine_metadata: {}, **_options)
+      def upload(io, id, shrine_metadata: {}, **upload_options)
         # uploads `io` to the location `id`
 
-        object = Google::Apis::StorageV1::Object.new @object_options.merge(bucket: @bucket, name: object_name(id))
-
+        object = Google::Apis::StorageV1::Object.new merged_object_options(id, upload_options)
         if copyable?(io)
           storage_api.copy_object(
             io.storage.bucket,
@@ -27,7 +26,7 @@ class Shrine
             @bucket,
             object_name(id),
             object,
-            destination_predefined_acl: @default_acl,
+            destination_predefined_acl: destination_acl(upload_options),
           )
         else
           storage_api.insert_object(
@@ -36,12 +35,12 @@ class Shrine
             content_type: shrine_metadata["mime_type"],
             upload_source: io.to_io,
             options: { uploadType: 'multipart' },
-            predefined_acl: @default_acl,
+            predefined_acl: destination_acl(upload_options),
           )
         end
       end
 
-      def url(id, **_options)
+      def url(id, **upload_options)
         # URL to the remote file, accepts options for customizing the URL
         host = @host || "storage.googleapis.com/#{@bucket}"
 
@@ -161,6 +160,17 @@ class Shrine
           @storage_api = service
         end
         @storage_api
+      end
+
+      def destination_acl(upload_options)
+        upload_options[:acl] || @default_acl
+      end
+
+      def merged_object_options(id, upload_options)
+        per_upload = upload_options[:object_options] || {}
+        @object_options.merge(per_upload.merge(
+          bucket: @bucket,
+          name: object_name(id)))
       end
     end
   end
