@@ -1,2 +1,4 @@
 .env
 pkg/
+.ruby-gemset
+.ruby-version

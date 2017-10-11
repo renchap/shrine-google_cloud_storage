@@ -1,5 +1,5 @@
 require "shrine"
-require "googleauth"
+require "google-cloud-storage"
 require "google/apis/storage_v1"
 
 class Shrine
@@ -7,7 +7,11 @@ class Shrine
     class GoogleCloudStorage
       attr_reader :bucket, :prefix, :host
 
-      def initialize(bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {})
+      # Initialize a Shrine::Storage for GCS allowing for auto-discovery of the Google::Cloud::Storage client.
+      # @param [String] project Provide
+      # @see http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication#environmentvariables for information on discovery
+      def initialize(project:, bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {})
+        @project = project
         @bucket = bucket
         @prefix = prefix
         @host = host
@@ -15,93 +19,69 @@ class Shrine
         @object_options = object_options
       end
 
+      # If the file is an UploadFile from GCS, issues a copy command, otherwise it uploads a file.
       def upload(io, id, shrine_metadata: {}, **_options)
         # uploads `io` to the location `id`
 
-        object = Google::Apis::StorageV1::Object.new @object_options.merge(bucket: @bucket, name: object_name(id))
-
         if copyable?(io)
-          storage_api.copy_object(
-            io.storage.bucket,
-            io.storage.object_name(io.id),
-            @bucket,
-            object_name(id),
-            object,
-            destination_predefined_acl: @default_acl,
+          existing_file = get_bucket(io.storage.bucket).file(io.storage.object_name(io.id))
+          existing_file.copy(
+              dest_bucket_or_path: @bucket,
+              dest_path: object_name(id),
+              acl: @default_acl
           )
         else
-          storage_api.insert_object(
-            @bucket,
-            object,
-            content_type: shrine_metadata["mime_type"],
-            upload_source: io.to_io,
-            options: { uploadType: 'multipart' },
-            predefined_acl: @default_acl,
+          get_bucket.create_file(
+              file: io,
+              path: object_name(id),
+              content_type: shrine_metadata["mime_type"],
+              acl: @default_acl
           )
         end
       end
 
+      # URL to the remote file, accepts options for customizing the URL
       def url(id, **_options)
-        # URL to the remote file, accepts options for customizing the URL
         host = @host || "storage.googleapis.com/#{@bucket}"
 
         "https://#{host}/#{object_name(id)}"
       end
 
+      # Downloads the file from GCS, and returns a `Tempfile`.
       def download(id)
         tempfile = Tempfile.new(["googlestorage", File.extname(id)], binmode: true)
         storage_api.get_object(@bucket, object_name(id), download_dest: tempfile)
+        get_file(id).download tempfile.path
         tempfile.tap(&:open)
       end
 
+      # Download the remote file to an in-memory StringIO object
+      # @return [StringIO] object
       def open(id)
-        # returns the remote file as an IO-like object
-        io = storage_api.get_object(@bucket, object_name(id), download_dest: StringIO.new)
+        io = get_file(id).download
         io.rewind
         io
       end
 
+      # checks if the file exists on the storage
       def exists?(id)
-        # checks if the file exists on the storage
-        storage_api.get_object(@bucket, object_name(id)) do |_, err|
-          if err
-            if err.status_code == 404
-              false
-            else
-              raise err
-            end
-          else
-            true
-          end
-        end
+        get_file(id).exists?
       end
 
+      # deletes the file from the storage
       def delete(id)
-        # deletes the file from the storage
-        storage_api.delete_object(@bucket, object_name(id))
-
-      rescue Google::Apis::ClientError => e
-        # The object does not exist, Shrine expects us to be ok
-        return true if e.status_code == 404
-
-        raise e
+        get_file(id).delete
       end
 
+      # Deletes multiple files at once from the storage.
       def multi_delete(ids)
         batch_delete(ids.map { |i| object_name(i) })
       end
 
+      # Otherwise deletes all objects from the storage.
       def clear!
-        all_objects = storage_api.fetch_all do |token, s|
-          prefix = "#{@prefix}/" if @prefix
-          s.list_objects(
-            @bucket,
-            prefix: prefix,
-            fields: "items/name",
-            page_token: token,
-          )
-        end
-
+        prefix = "#{@prefix}/" if @prefix
+        all_objects = get_bucket.files prefix: prefix
         batch_delete(all_objects.lazy.map(&:name))
       end
 
@@ -134,6 +114,23 @@ class Shrine
 
       private
 
+      def get_file(id)
+        get_bucket.file(object_name(id))
+      end
+
+      def get_bucket(bucket_name = @bucket)
+        new_storage.bucket(bucket_name)
+      end
+
+      # @see http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication
+      def new_storage
+        if @project.nil?
+          Google::Cloud::Storage.new
+        else
+          Google::Cloud::Storage.new(project: @project)
+        end
+      end
+
       def copyable?(io)
         io.is_a?(UploadedFile) &&
           io.storage.is_a?(Storage::GoogleCloudStorage)
@@ -141,26 +138,10 @@ class Shrine
       end
 
       def batch_delete(object_names)
-        # Batches are limited to 100 operations
-        object_names.each_slice(100) do |names|
-          storage_api.batch do |storage|
-            names.each do |name|
-              storage.delete_object(@bucket, name)
-            end
-          end
+        bucket = get_bucket
+        object_names.each do |name|
+          bucket.file(name).delete
         end
-      end
-
-      def storage_api
-        if !@storage_api || @storage_api.authorization.expired?
-          service = Google::Apis::StorageV1::StorageService.new
-          scopes = ['https://www.googleapis.com/auth/devstorage.read_write']
-          authorization = Google::Auth.get_application_default(scopes)
-          authorization.fetch_access_token!
-          service.authorization = authorization
-          @storage_api = service
-        end
-        @storage_api
       end
     end
   end
