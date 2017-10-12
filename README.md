@@ -41,14 +41,38 @@ Shrine::Storage::GoogleCloudStorage.new(
 
 ## Contributing
 
-Firstly you need to create an `.env` file with a dedicated GCS bucket:
+### Test setup
+
+#### Option 1 - use the script
+
+Review the script `test/test_env_setup.sh`.  It will:
+- create a service account
+- add the `roles/storage.admin` iam policy
+- download the json credentials
+- create a test bucket
+- create a private `.env` file with relevant variables
+
+To run, it assumes you have already run `gcloud auth login`.
 
 ```sh
-# .env
-GCS_BUCKET="..."
+GOOGLE_CLOUD_PROJECT=[my project id]
+./test/test_env_setup.sh
 ```
 
-Warning: all content of the bucket is cleared between tests, create a new one only for this usage!
+#### Option 2 - manual setup
+
+Create your own bucket and provide variables that allow for [project and credential lookup](http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication#projectandcredentiallookup).
+For example:
+
+```sh
+GCS_BUCKET=shrine-gcs-test-my-project
+GOOGLE_CLOUD_PROJECT=my-project
+GOOGLE_CLOUD_KEYFILE=/Users/kross/.gcp/my-project/shrine-gcs-test.json
+```
+
+**Warning**: all content of the bucket is cleared between tests, create a new one only for this usage!
+
+### Running tests
 
 Afterwards you can run the tests:
 
