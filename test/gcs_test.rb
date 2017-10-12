@@ -125,7 +125,7 @@ wXh0ExlzwgD2xJ0=
     end
   end
 
-  describe "clear!" do
+  describe "#clear!" do
     it "does not empty the whole bucket when a prefix is set" do
       gcs_with_prefix = gcs(prefix: 'pre')
       @gcs.upload(image, 'foo')
@@ -136,24 +136,71 @@ wXh0ExlzwgD2xJ0=
     end
   end
 
-  describe "presign" do
-    it "works on a GET url" do
+  describe "#presign" do
+    it "signs a GET url with a signing key and issuer" do
+      gcs = gcs()
+      gcs.upload(image, 'foo')
+
       sa = service_account
-
-      storage = Shrine::Storage::GoogleCloudStorage.new(bucket: "shrine-test")
-
       Time.stub :now, Time.at(1486649900) do
-        presign = storage.presign(
-          'test_presign.txt',
-          method: "GET",
-          expires: 60 * 5,
+        presign = gcs.presign(
+          'foo',
           signing_key: sa[:private_key],
           issuer: sa[:client_email],
         )
 
-        assert_equal "https://storage.googleapis.com/shrine-test/test_presign.txt?GoogleAccessId=test-shrine@test.google&Expires=1486650200&Signature=O8tYOAJCtk0fXpO9MDhRO7ikVsIRqjALK01naly2rEJBCM2uRHl7meqEaXzu%2Bl9V17zw9P2%2FGb0K2miF%2FyEuZ6mnRIiuH6aI2tg24CV%2FKtuNU5jSqwqMU83iPzuptwakgFNxMGJj73i0SGbB%2F4wodNR7DNQ6KFhSlpJJ1mgD4hI%3D", presign.url
+        assert_equal "https://storage.googleapis.com/#{gcs.bucket}/foo?GoogleAccessId=test-shrine%40test.google&Expires=1486650200&Signature=FkS%2Bn4C0VxnsoqQIKG2AcsK0UWMY2KzfiyEQHAAezL%2Fk9mytRx8n8p8qV1FfEFieOOPFnj9%2FroC0MzA6VOaQUpPbHJw7NfcxLXO0F4TcTqeHxpHmbSvNgm7k18Q%2FscUdop2r9aZrqFJIMfqWoBwKlyEGsKcTZ1WNzizKhDM89p8%3D", presign.url
         assert_equal({}, presign.fields)
       end
+    end
+
+    it "signs a GET url with discovered credentials" do
+      gcs = gcs()
+      gcs.upload(image, 'foo')
+
+      Time.stub :now, Time.at(1486649900) do
+        presign = gcs.presign('foo')
+        assert presign.url.include? "https://storage.googleapis.com/#{gcs.bucket}/foo?"
+        assert presign.url.include? "Expires=1486650200"
+        assert presign.url.include? "Signature=" # each tester's discovered signature will be different
+        assert_equal({}, presign.fields)
+      end
+    end
+  end
+
+  describe "#url" do
+    describe "signed" do
+      it "url with `expires` signs a GET url with discovered credentials" do
+        gcs = gcs()
+        gcs.upload(image, 'foo')
+
+        Time.stub :now, Time.at(1486649900) do
+          presigned_url = gcs.url('foo', expires: 300)
+          assert presigned_url.include? "https://storage.googleapis.com/#{gcs.bucket}/foo?"
+          assert presigned_url.include? "Expires=1486650200"
+          assert presigned_url.include? "Signature=" # each tester's discovered signature will be different
+        end
+      end
+
+      it "url with `expires` signs a GET url with discovered credentials and specified host" do
+        host = "123.mycdn.net"
+        gcs = gcs(host: host)
+        gcs.upload(image, 'foo')
+
+        Time.stub :now, Time.at(1486649900) do
+          presigned_url = gcs.url('foo', expires: 300)
+          assert presigned_url.include? "https://#{host}/foo?"
+          assert presigned_url.include? "Expires=1486650200"
+          assert presigned_url.include? "Signature=" # each tester's discovered signature will be different
+        end
+      end
+    end
+
+    it "accepts :host for specifying CDN links" do
+      host = "123.mycdn.net"
+      gcs = gcs(host: host)
+      url = gcs.url('foo')
+      assert_equal("https://123.mycdn.net/foo", url)
     end
   end
 end

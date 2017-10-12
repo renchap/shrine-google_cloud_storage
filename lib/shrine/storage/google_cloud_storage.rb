@@ -49,9 +49,17 @@ class Shrine
 
       # URL to the remote file, accepts options for customizing the URL
       def url(id, **_options)
-        host = @host || "storage.googleapis.com/#{@bucket}"
-
-        "https://#{host}/#{object_name(id)}"
+        if(_options.key? :expires)
+          signed_url = presign(id, _options).url
+          if @host.nil?
+            signed_url
+          else
+            signed_url.gsub(/storage.googleapis.com\/#{@bucket}/, @host)
+          end
+        else
+          host = @host || "storage.googleapis.com/#{@bucket}"
+          "https://#{host}/#{object_name(id)}"
+        end
       end
 
       # Downloads the file from GCS, and returns a `Tempfile`.
@@ -95,24 +103,9 @@ class Shrine
       end
 
       def presign(id, **options)
-        method = options[:method] || "GET"
-        content_md5 = options[:content_md5] || ""
-        content_type = options[:content_type] || ""
-        expires = (Time.now.utc + (options[:expires] || 300)).to_i
-        headers = nil
-        path = "/#{@bucket}/" + object_name(id)
-
-        to_sign = [method, content_md5, content_type, expires, headers, path].compact.join("\n")
-
-        signing_key = options[:signing_key]
-        signing_key = OpenSSL::PKey::RSA.new(signing_key) unless signing_key.respond_to?(:sign)
-        signature = Base64.strict_encode64(signing_key.sign(OpenSSL::Digest::SHA256.new, to_sign)).delete("\n")
-
-        signed_url = "https://storage.googleapis.com#{path}?GoogleAccessId=#{options[:issuer]}" \
-          "&Expires=#{expires}&Signature=#{CGI.escape(signature)}"
-
+        file = get_file(id)
         OpenStruct.new(
-          url: signed_url,
+          url: file.signed_url(options),
           fields: {},
         )
       end
