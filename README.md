@@ -12,7 +12,7 @@ gem "shrine-google_cloud_storage"
 
 ## Authentication
 
-The GCS plugin uses Google's [Application Default Credentials]. Please check
+The GCS plugin uses Google's [Project and Credential Lookup](http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication#projectandcredentiallookup). Please check
 documentation for the various ways to provide credentials.
 
 ## Usage
