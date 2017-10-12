@@ -1,6 +1,5 @@
 require "shrine"
 require "google/cloud/storage"
-require "google/apis/storage_v1"
 
 class Shrine
   module Storage
@@ -20,26 +19,30 @@ class Shrine
       end
 
       # If the file is an UploadFile from GCS, issues a copy command, otherwise it uploads a file.
+      # @param [IO] io - io like object
+      # @param [String] id - location
       def upload(io, id, shrine_metadata: {}, **_options)
-        # uploads `io` to the location `id`
-
-        options = @object_options.merge(
-            content_type: shrine_metadata["mime_type"],
-            acl: @default_acl
-        ).merge(_options)
-
         if copyable?(io)
           existing_file = get_bucket(io.storage.bucket).file(io.storage.object_name(io.id))
-          existing_file.copy(
+          file = existing_file.copy(
               @bucket, # dest_bucket_or_path - the bucket to copy the file to
               object_name(id), # dest_path - the path to copy the file to in the given bucket
-              options
-          )
+              acl: @default_acl
+          ) do |f|
+            # update the additional options
+            @object_options.merge(_options).each_pair do |key, value|
+              f.send("#{key}=", value)
+            end
+          end
+          file
         else
           get_bucket.create_file(
               io, # file -  IO object, or IO-ish object like StringIO
               object_name(id), # path
-              options
+              @object_options.merge(
+                  content_type: shrine_metadata["mime_type"],
+                  acl: @default_acl
+              ).merge(_options)
           )
         end
       end
@@ -68,12 +71,15 @@ class Shrine
 
       # checks if the file exists on the storage
       def exists?(id)
-        get_file(id).exists?
+        file = get_file(id)
+        return false if file.nil?
+        file.exists?
       end
 
       # deletes the file from the storage
       def delete(id)
-        get_file(id).delete
+        file = get_file(id)
+        file.delete unless file.nil?
       end
 
       # Deletes multiple files at once from the storage.

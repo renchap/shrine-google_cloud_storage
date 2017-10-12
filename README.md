@@ -74,10 +74,16 @@ GOOGLE_CLOUD_KEYFILE=/Users/kross/.gcp/my-project/shrine-gcs-test.json
 
 ### Running tests
 
-Afterwards you can run the tests:
+After setting up your bucket, run the tests:
 
 ```sh
 $ bundle exec rake test
+```
+
+For additional debug, add the following to your `.env` file:
+
+```sh
+GCS_DEBUG=true
 ```
 
 ## License
