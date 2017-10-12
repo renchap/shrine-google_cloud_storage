@@ -1,4 +1,5 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
+set -ex
 
 # This script will create a service account for GCS used for testing and will add to ../.env the necessary env variables.
 # The script below assumes you have run `gcloud auth login`
@@ -31,7 +32,6 @@ gcloud iam service-accounts keys create $GOOGLE_CLOUD_KEYFILE \
 GCS_BUCKET=${GCS_SA}-${GOOGLE_CLOUD_PROJECT}
 gsutil mb -p $GOOGLE_CLOUD_PROJECT gs://$GCS_BUCKET/
 
-rm -f ../.env
 cat >../.env <<EOL
 GCS_BUCKET=${GCS_BUCKET}
 GOOGLE_CLOUD_PROJECT=${GOOGLE_CLOUD_PROJECT}

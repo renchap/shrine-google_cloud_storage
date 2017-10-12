@@ -21,7 +21,7 @@ class Shrine
       # If the file is an UploadFile from GCS, issues a copy command, otherwise it uploads a file.
       # @param [IO] io - io like object
       # @param [String] id - location
-      def upload(io, id, shrine_metadata: {}, **_options)
+      def upload(io, id, shrine_metadata: {}, **options)
         if copyable?(io)
           existing_file = get_bucket(io.storage.bucket).file(io.storage.object_name(io.id))
           file = existing_file.copy(
@@ -30,7 +30,7 @@ class Shrine
               acl: @default_acl
           ) do |f|
             # update the additional options
-            @object_options.merge(_options).each_pair do |key, value|
+            @object_options.merge(options).each_pair do |key, value|
               f.send("#{key}=", value)
             end
           end
@@ -42,15 +42,15 @@ class Shrine
               @object_options.merge(
                   content_type: shrine_metadata["mime_type"],
                   acl: @default_acl
-              ).merge(_options)
+              ).merge(options)
           )
         end
       end
 
       # URL to the remote file, accepts options for customizing the URL
-      def url(id, **_options)
-        if(_options.key? :expires)
-          signed_url = presign(id, _options).url
+      def url(id, **options)
+        if(options.key? :expires)
+          signed_url = presign(id, options).url
           if @host.nil?
             signed_url
           else
@@ -98,8 +98,12 @@ class Shrine
       # Otherwise deletes all objects from the storage.
       def clear!
         prefix = "#{@prefix}/" if @prefix
-        all_objects = get_bucket.files prefix: prefix
-        batch_delete(all_objects.lazy.map(&:name))
+        files = get_bucket.files prefix: prefix
+        batch_delete(files.lazy.map(&:name))
+        loop do
+          break if !files.next?
+          batch_delete(files.next.lazy.map(&:name))
+        end
       end
 
       def presign(id, **options)

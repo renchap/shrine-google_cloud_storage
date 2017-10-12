@@ -196,6 +196,12 @@ wXh0ExlzwgD2xJ0=
       end
     end
 
+    it "provides a storage.googleapis.com url by default" do
+      gcs = gcs()
+      url = gcs.url('foo')
+      assert_equal("https://storage.googleapis.com/#{gcs.bucket}/foo", url)
+    end
+
     it "accepts :host for specifying CDN links" do
       host = "123.mycdn.net"
       gcs = gcs(host: host)

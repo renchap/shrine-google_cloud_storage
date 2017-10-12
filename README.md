@@ -45,7 +45,7 @@ Shrine::Storage::GoogleCloudStorage.new(
 
 #### Option 1 - use the script
 
-Review the script `test/test_env_setup.sh`.  It will:
+Review the script `test/create_test_environment.sh`.  It will:
 - create a service account
 - add the `roles/storage.admin` iam policy
 - download the json credentials
