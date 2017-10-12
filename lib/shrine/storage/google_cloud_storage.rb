@@ -23,19 +23,23 @@ class Shrine
       def upload(io, id, shrine_metadata: {}, **_options)
         # uploads `io` to the location `id`
 
+        options = @object_options.merge(
+            content_type: shrine_metadata["mime_type"],
+            acl: @default_acl
+        ).merge(_options)
+
         if copyable?(io)
           existing_file = get_bucket(io.storage.bucket).file(io.storage.object_name(io.id))
           existing_file.copy(
-              dest_bucket_or_path: @bucket,
-              dest_path: object_name(id),
-              acl: @default_acl
+              @bucket, # dest_bucket_or_path - the bucket to copy the file to
+              object_name(id), # dest_path - the path to copy the file to in the given bucket
+              options
           )
         else
           get_bucket.create_file(
-              file: io,
-              path: object_name(id),
-              content_type: shrine_metadata["mime_type"],
-              acl: @default_acl
+              io, # file -  IO object, or IO-ish object like StringIO
+              object_name(id), # path
+              options
           )
         end
       end
@@ -50,7 +54,6 @@ class Shrine
       # Downloads the file from GCS, and returns a `Tempfile`.
       def download(id)
         tempfile = Tempfile.new(["googlestorage", File.extname(id)], binmode: true)
-        storage_api.get_object(@bucket, object_name(id), download_dest: tempfile)
         get_file(id).download tempfile.path
         tempfile.tap(&:open)
       end
