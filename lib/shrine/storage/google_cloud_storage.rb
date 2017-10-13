@@ -7,18 +7,18 @@ class Shrine
     class GoogleCloudStorage
       attr_reader :bucket, :prefix, :host
 
-      def initialize(bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {})
+      def initialize(bucket:, prefix: nil, host: nil, acl: nil, **upload_options)
         @bucket = bucket
         @prefix = prefix
         @host = host
-        @default_acl = default_acl
-        @object_options = object_options
+        @default_acl = acl
+        @upload_options = upload_options
       end
 
       def upload(io, id, shrine_metadata: {}, **upload_options)
         # uploads `io` to the location `id`
 
-        object = Google::Apis::StorageV1::Object.new merged_object_options(id, upload_options)
+        object = Google::Apis::StorageV1::Object.new merged_upload_options(id, upload_options)
         if copyable?(io)
           storage_api.copy_object(
             io.storage.bucket,
@@ -166,9 +166,10 @@ class Shrine
         upload_options[:acl] || @default_acl
       end
 
-      def merged_object_options(id, upload_options)
-        per_upload = upload_options[:object_options] || {}
-        @object_options.merge(per_upload.merge(
+      def merged_upload_options(id, upload_options)
+        per_upload = upload_options.dup || {}
+        per_upload.delete(:acl)
+        @upload_options.merge(per_upload.merge(
           bucket: @bucket,
           name: object_name(id)))
       end

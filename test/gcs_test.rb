@@ -51,9 +51,9 @@ wXh0ExlzwgD2xJ0=
     Shrine::Storage::Linter.new(gcs(prefix: 'pre')).call(-> { image })
   end
 
-  describe "default_acl" do
+  describe "acl" do
     it "does set default acl when uploading a new object" do
-      gcs = gcs(default_acl: 'publicRead')
+      gcs = gcs(acl: 'publicRead')
       gcs.upload(image, 'foo')
 
       url = URI(gcs.url('foo'))
@@ -67,7 +67,7 @@ wXh0ExlzwgD2xJ0=
     end
 
     it "does set default acl when copying an object" do
-      gcs = gcs(default_acl: 'publicRead')
+      gcs = gcs(acl: 'publicRead')
       object = @uploader.upload(image, location: 'foo')
 
       gcs.upload(object, 'bar')
@@ -90,10 +90,10 @@ wXh0ExlzwgD2xJ0=
     end
   end
 
-  describe "object_options" do
-    it "does set the Cache-Control header when uploading a new object" do
+  describe "cache-control" do
+    it "sets the Cache-Control header when uploading a new object" do
       cache_control = 'public, max-age=7200'
-      gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
+      gcs = gcs(acl: 'publicRead', cache_control: cache_control)
       gcs.upload(image, 'foo')
 
       assert @gcs.exists?('foo')
@@ -109,7 +109,7 @@ wXh0ExlzwgD2xJ0=
 
     it "does set the configured Cache-Control header when copying an object" do
       cache_control = 'public, max-age=7200'
-      gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
+      gcs = gcs(acl: 'publicRead', cache_control: cache_control)
       object = @uploader.upload(image, location: 'foo')
 
       gcs.upload(object, 'bar')
@@ -125,9 +125,9 @@ wXh0ExlzwgD2xJ0=
     end
   end
 
-  describe "upload_options" do
-    it "overrides default_acl" do
-      gcs = gcs(default_acl: 'private')
+  describe "upload" do
+    it "overrides default acl" do
+      gcs = gcs(acl: 'private')
       upload_options = { acl: "publicRead" }
       gcs.upload(image, 'foo', shrine_metadata: {}, **upload_options)
 
@@ -141,13 +141,13 @@ wXh0ExlzwgD2xJ0=
       assert @gcs.exists?('foo')
     end
 
-    it "overrides object_options' Cache-Control" do
-      gcs = gcs(default_acl: 'private')
+    it "overrides Cache-Control" do
+      gcs = gcs(acl: 'private')
       cache_control = 'public, max-age=7200'
       gcs.upload(image,
                  'foo',
                  shrine_metadata: {},
-                 acl: 'publicRead', object_options: { cache_control: cache_control })
+                 acl: 'publicRead', cache_control: cache_control)
 
       assert @gcs.exists?('foo')
 
