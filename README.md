@@ -26,15 +26,13 @@ Shrine.storages = {
 }
 ```
 
-You can set a predefined ACL on created objects, as well as custom headers using the `object_options` parameter:
+You can set a predefined ACL on created objects, as well as custom headers:
 
 ```rb
 Shrine::Storage::GoogleCloudStorage.new(
   bucket: "store",
-  default_acl: 'publicRead',
-  object_options: {
-    cache_control: 'public, max-age: 7200'
-  },
+  acl: 'publicRead',
+  cache_control: 'public, max-age: 7200'
 )
 ```
 

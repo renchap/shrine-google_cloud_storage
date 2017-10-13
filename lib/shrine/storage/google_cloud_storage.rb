@@ -7,19 +7,18 @@ class Shrine
     class GoogleCloudStorage
       attr_reader :bucket, :prefix, :host
 
-      def initialize(bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {})
+      def initialize(bucket:, prefix: nil, host: nil, acl: nil, **upload_options)
         @bucket = bucket
         @prefix = prefix
         @host = host
-        @default_acl = default_acl
-        @object_options = object_options
+        @default_acl = acl
+        @upload_options = upload_options
       end
 
-      def upload(io, id, shrine_metadata: {}, **_options)
+      def upload(io, id, shrine_metadata: {}, acl: @default_acl, **upload_options)
         # uploads `io` to the location `id`
 
-        object = Google::Apis::StorageV1::Object.new @object_options.merge(bucket: @bucket, name: object_name(id))
-
+        object = Google::Apis::StorageV1::Object.new merged_upload_options(id, upload_options)
         if copyable?(io)
           storage_api.copy_object(
             io.storage.bucket,
@@ -27,7 +26,7 @@ class Shrine
             @bucket,
             object_name(id),
             object,
-            destination_predefined_acl: @default_acl,
+            destination_predefined_acl: acl,
           )
         else
           storage_api.insert_object(
@@ -36,12 +35,12 @@ class Shrine
             content_type: shrine_metadata["mime_type"],
             upload_source: io.to_io,
             options: { uploadType: 'multipart' },
-            predefined_acl: @default_acl,
+            predefined_acl: acl,
           )
         end
       end
 
-      def url(id, **_options)
+      def url(id, **upload_options)
         # URL to the remote file, accepts options for customizing the URL
         host = @host || "storage.googleapis.com/#{@bucket}"
 
@@ -161,6 +160,14 @@ class Shrine
           @storage_api = service
         end
         @storage_api
+      end
+
+      def merged_upload_options(id, upload_options)
+        per_upload = upload_options.dup || {}
+        per_upload.delete(:acl)
+        @upload_options.merge(per_upload.merge(
+          bucket: @bucket,
+          name: object_name(id)))
       end
     end
   end
