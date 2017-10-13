@@ -15,7 +15,7 @@ class Shrine
         @upload_options = upload_options
       end
 
-      def upload(io, id, shrine_metadata: {}, **upload_options)
+      def upload(io, id, shrine_metadata: {}, acl: @default_acl, **upload_options)
         # uploads `io` to the location `id`
 
         object = Google::Apis::StorageV1::Object.new merged_upload_options(id, upload_options)
@@ -26,7 +26,7 @@ class Shrine
             @bucket,
             object_name(id),
             object,
-            destination_predefined_acl: destination_acl(upload_options),
+            destination_predefined_acl: acl,
           )
         else
           storage_api.insert_object(
@@ -35,7 +35,7 @@ class Shrine
             content_type: shrine_metadata["mime_type"],
             upload_source: io.to_io,
             options: { uploadType: 'multipart' },
-            predefined_acl: destination_acl(upload_options),
+            predefined_acl: acl,
           )
         end
       end
@@ -160,10 +160,6 @@ class Shrine
           @storage_api = service
         end
         @storage_api
-      end
-
-      def destination_acl(upload_options)
-        upload_options[:acl] || @default_acl
       end
 
       def merged_upload_options(id, upload_options)
