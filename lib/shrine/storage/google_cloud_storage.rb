@@ -18,7 +18,11 @@ class Shrine
       def upload(io, id, shrine_metadata: {}, **_options)
         # uploads `io` to the location `id`
 
-        object = Google::Apis::StorageV1::Object.new @object_options.merge(bucket: @bucket, name: object_name(id))
+        object = Google::Apis::StorageV1::Object.new @object_options.merge(
+          bucket: @bucket,
+          name: object_name(id),
+          content_type: shrine_metadata["mime_type"],
+        )
 
         if copyable?(io)
           storage_api.copy_object(
