@@ -87,10 +87,6 @@ class Shrine
         raise e
       end
 
-      def multi_delete(ids)
-        batch_delete(ids.map { |i| object_name(i) })
-      end
-
       def clear!
         ids = []
 
