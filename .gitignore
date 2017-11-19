@@ -1,2 +1,6 @@
 .env
 pkg/
+.ruby-gemset
+.ruby-version
+
+keyfile_*.json
