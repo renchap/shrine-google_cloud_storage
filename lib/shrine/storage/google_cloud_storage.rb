@@ -90,12 +90,6 @@ class Shrine
         file.delete unless file.nil?
       end
 
-      # Deletes multiple files at once from the storage.
-      def multi_delete(ids)
-        batch_delete(ids.map { |i| object_name(i) })
-      end
-
-      # Otherwise deletes all objects from the storage.
       def clear!
         prefix = "#{@prefix}/" if @prefix
         files = get_bucket.files prefix: prefix
