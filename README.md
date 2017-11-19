@@ -12,7 +12,7 @@ gem "shrine-google_cloud_storage"
 
 ## Authentication
 
-The GCS plugin uses Google's [Project and Credential Lookup](http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication#projectandcredentiallookup). Please check
+The GCS plugin uses Google's [Project and Credential Lookup]. Please check
 documentation for the various ways to provide credentials.
 
 ## Usage
@@ -45,18 +45,23 @@ Shrine::Storage::GoogleCloudStorage.new(
 
 #### Option 1 - use the script
 
-Review the script `test/create_test_environment.sh`.  It will:
+Review the script `test/create_test_environment.sh`. It will:
+- create a Google Cloud project
+- associate it with your billing account
 - create a service account
 - add the `roles/storage.admin` iam policy
 - download the json credentials
 - create a test bucket
-- create a private `.env` file with relevant variables
+- add the needed variables to your `.env` file
 
 To run, it assumes you have already run `gcloud auth login`.
+It also needs a `.env` file in the project root containing the project name
+and the billing account to use:
 
 ```sh
-GOOGLE_CLOUD_PROJECT=[my project id]
-./test/test_env_setup.sh
+cp .env.sample .env
+# Edit .env to fill in your project and billing accounts
+./test/create_test_environment.sh
 ```
 
 #### Option 2 - manual setup
@@ -67,7 +72,7 @@ For example:
 ```sh
 GCS_BUCKET=shrine-gcs-test-my-project
 GOOGLE_CLOUD_PROJECT=my-project
-GOOGLE_CLOUD_KEYFILE=/Users/kross/.gcp/my-project/shrine-gcs-test.json
+GOOGLE_CLOUD_KEYFILE=/Users/user/.gcp/my-project/shrine-gcs-test.json
 ```
 
 **Warning**: all content of the bucket is cleared between tests, create a new one only for this usage!
@@ -92,4 +97,4 @@ GCS_DEBUG=true
 
 [Google Cloud Storage]: https://cloud.google.com/storage/
 [Shrine]: https://github.com/janko-m/shrine
-[Application Default Credentials]: https://developers.google.com/identity/protocols/application-default-credentials
+[Project and Credential Lookup]: http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/master/guides/authentication#projectandcredentiallookup
