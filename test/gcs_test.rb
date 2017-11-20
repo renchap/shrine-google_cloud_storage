@@ -212,4 +212,38 @@ wXh0ExlzwgD2xJ0=
       assert_equal("https://123.mycdn.net/foo", url)
     end
   end
+
+  describe '#upload' do
+    it 'uploads a io stream to google cloud storage' do
+      io = StringIO.new("data")
+
+      file_key = random_key
+
+      @gcs.upload(io, file_key)
+
+      assert @gcs.exists?(file_key)
+    end
+
+    it 'uploads a non io object that responds to .to_io' do
+      io = StringIO.new("data")
+      file = FakeUploadedFile.new(io)
+
+      file_key = random_key
+
+      @gcs.upload(file, file_key)
+
+      assert @gcs.exists?(file_key)
+    end
+
+    it 'uploads a non io object that responds to .tempfile' do
+      io = StringIO.new("data")
+      file = FakeOldUploadedFile.new(io)
+
+      file_key = random_key
+
+      @gcs.upload(file, file_key)
+
+      assert @gcs.exists?(file_key)
+    end
+  end
 end

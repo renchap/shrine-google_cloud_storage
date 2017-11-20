@@ -37,7 +37,7 @@ class Shrine
           file
         else
           get_bucket.create_file(
-              io, # file -  IO object, or IO-ish object like StringIO
+              prepare_io(io), # file -  IO object, or IO-ish object like StringIO
               object_name(id), # path
               @object_options.merge(
                   content_type: shrine_metadata["mime_type"],
@@ -136,6 +136,23 @@ class Shrine
         io.is_a?(UploadedFile) &&
           io.storage.is_a?(Storage::GoogleCloudStorage)
         # TODO: add a check for the credentials
+      end
+
+      # Google cloud storage client only accepts IO|IOString|Tempfile instances
+      # or else it will raise a "Google::Apis::ClientError, 'Invalid upload source"
+      #
+      # We need to convert our file to an IO.
+      j
+      # see:
+      # https://github.com/google/google-api-ruby-client/blob/1c2cf5d57fd5e606c03f2aecab88469f46b8f3b2/lib/google/apis/core/upload.rb#L77
+      def prepare_io(io)
+        if io.respond_to?(:to_io)
+          io.to_io
+        elsif io.respond_to?(:tempfile)
+          io.tempfile
+        else
+          io
+        end
       end
 
       def batch_delete(object_names)
