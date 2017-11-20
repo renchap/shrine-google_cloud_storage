@@ -157,6 +157,18 @@ wXh0ExlzwgD2xJ0=
       end
     end
 
+    it "generated a signed url for a non-existing object" do
+      gcs = gcs()
+
+      Time.stub :now, Time.at(1486649900) do
+        presign = gcs.presign('nonexisting')
+        assert presign.url.include? "https://storage.googleapis.com/#{gcs.bucket}/nonexisting?"
+        assert presign.url.include? "Expires=1486650200"
+        assert presign.url.include? "Signature=" # each tester's discovered signature will be different
+        assert_equal({}, presign.fields)
+      end
+    end
+
     it "signs a GET url with discovered credentials" do
       gcs = gcs()
       gcs.upload(image, 'foo')

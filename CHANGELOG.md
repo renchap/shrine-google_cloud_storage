@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - switched to `google-cloud-storage` gem (#16 by @rosskevin)
 - added a `test/create_test_environment.sh` script to setup a test environment automatically (#16 by @rosskevin)
 
+### Removed
+- removed support for `multi_delete`, as this feature has been deprecated in Shrine
+
 ## 0.2.0 - 2017-06-23
 ### Changed
 - moved batching to `batch_delete`, so it is used for `multi_delete` (#11 by @janko-m)

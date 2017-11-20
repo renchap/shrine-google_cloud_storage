@@ -16,6 +16,7 @@ class Shrine
         @host = host
         @default_acl = default_acl
         @object_options = object_options
+        @storage = nil
       end
 
       # If the file is an UploadFile from GCS, issues a copy command, otherwise it uploads a file.
@@ -102,9 +103,8 @@ class Shrine
       end
 
       def presign(id, **options)
-        file = get_file(id)
         OpenStruct.new(
-          url: file.signed_url(options),
+          url: storage.signed_url(@bucket, object_name(id), options),
           fields: {},
         )
       end
@@ -120,16 +120,16 @@ class Shrine
       end
 
       def get_bucket(bucket_name = @bucket)
-        new_storage.bucket(bucket_name)
+        storage.bucket(bucket_name)
       end
 
       # @see http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication
-      def new_storage
-        if @project.nil?
-          Google::Cloud::Storage.new
-        else
-          Google::Cloud::Storage.new(project: @project)
-        end
+      def storage
+        @storage ||= if @project.nil?
+                       Google::Cloud::Storage.new
+                     else
+                       Google::Cloud::Storage.new(project: @project)
+                     end
       end
 
       def copyable?(io)
