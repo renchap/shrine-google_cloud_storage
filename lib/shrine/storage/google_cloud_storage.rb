@@ -188,6 +188,11 @@ class Shrine
           @proc.call(data)
           data.bytesize # match return value of other IO objects
         end
+
+        # TODO: Remove this once google/google-api-ruby-client#638 is merged.
+        def flush
+          # google-api-client calls this method
+        end
       end
     end
   end
