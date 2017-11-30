@@ -9,6 +9,7 @@ require "dotenv"
 
 require "forwardable"
 require "stringio"
+require "securerandom"
 
 Dotenv.load!
 
@@ -23,6 +24,26 @@ class FakeIO
   delegate [:read, :size, :close, :eof?, :rewind] => :@io
 end
 
+class FakeUploadedFile
+  def initialize(io)
+    @io = io
+  end
+
+  def to_io
+    @io
+  end
+end
+
+class FakeOldUploadedFile
+  def initialize(io)
+    @io = io
+  end
+
+  def tempfile
+    @io
+  end
+end
+
 class Minitest::Test
   def fakeio(content = "file")
     FakeIO.new(content)
@@ -30,5 +51,9 @@ class Minitest::Test
 
   def image
     File.open("test/fixtures/image.jpg")
+  end
+
+  def random_key
+    SecureRandom.hex(32)
   end
 end
