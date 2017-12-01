@@ -81,7 +81,7 @@ class Shrine
         chunks = Enumerator.new do |yielder|
           # trick to get google client to stream the download
           proc_io = ProcIO.new { |data| yielder << data }
-          file.download(proc_io)
+          file.download(proc_io, verify: :none)
         end
 
         # wrap chunks in an IO-like object which downloads when needed
