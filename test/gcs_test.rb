@@ -258,4 +258,14 @@ wXh0ExlzwgD2xJ0=
       assert @gcs.exists?(file_key)
     end
   end
+
+  describe "#open" do
+    it "returns an IO-like object around the file content" do
+      gcs.upload(image, 'foo')
+      io = gcs.open('foo')
+      assert_equal(image.size, io.size)
+      assert_equal(image.read, io.read)
+      assert_instance_of(Google::Cloud::Storage::File, io.data[:file])
+    end
+  end
 end

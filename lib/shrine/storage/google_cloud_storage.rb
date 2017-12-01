@@ -1,5 +1,6 @@
 require "shrine"
 require "google/cloud/storage"
+require "down/chunked_io"
 
 class Shrine
   module Storage
@@ -70,12 +71,25 @@ class Shrine
         tempfile.tap(&:open)
       end
 
-      # Download the remote file to an in-memory StringIO object
-      # @return [StringIO] object
+      # Opens the remote file and returns it as `Down::ChunkedIO` object.
+      # @return [Down::ChunkedIO] object
+      # @see https://github.com/janko-m/down#downchunkedio
       def open(id)
-        io = get_file(id).download
-        io.rewind
-        io
+        file = get_file(id)
+
+        # create enumerator which lazily yields chunks of downloaded content
+        chunks = Enumerator.new do |yielder|
+          # trick to get google client to stream the download
+          proc_io = ProcIO.new { |data| yielder << data }
+          file.download(proc_io, verify: :none)
+        end
+
+        # wrap chunks in an IO-like object which downloads when needed
+        Down::ChunkedIO.new(
+          chunks: chunks,
+          size:   file.size,
+          data:   { file: file }
+        )
       end
 
       # checks if the file exists on the storage
@@ -159,6 +173,25 @@ class Shrine
         bucket = get_bucket
         object_names.each do |name|
           bucket.file(name).delete
+        end
+      end
+
+      # This class provides a writable IO wrapper around a proc object, with
+      # #write simply calling the proc, which we can pass in as the destination
+      # IO for download.
+      class ProcIO
+        def initialize(&proc)
+          @proc = proc
+        end
+
+        def write(data)
+          @proc.call(data)
+          data.bytesize # match return value of other IO objects
+        end
+
+        # TODO: Remove this once google/google-api-ruby-client#638 is merged.
+        def flush
+          # google-api-client calls this method
         end
       end
     end

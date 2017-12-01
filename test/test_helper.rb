@@ -50,7 +50,7 @@ class Minitest::Test
   end
 
   def image
-    File.open("test/fixtures/image.jpg")
+    File.open("test/fixtures/image.jpg", "rb")
   end
 
   def random_key
