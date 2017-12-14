@@ -134,7 +134,7 @@ class Shrine
       end
 
       def get_bucket(bucket_name = @bucket)
-        storage.bucket(bucket_name)
+        storage.bucket(bucket_name, skip_lookup: true)
       end
 
       # @see http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication

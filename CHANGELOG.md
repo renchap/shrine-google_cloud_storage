@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Changed
 - switched to `google-cloud-storage` gem (#16 by @rosskevin)
 - added a `test/create_test_environment.sh` script to setup a test environment automatically (#16 by @rosskevin)
+- use `skip_lookup: true` when instanciating a bucket object to avoid an API call. This reduces the number of API calls for most operations, making them faster. It also allows operating on buckets with a restricted Service Account that does not have access to `storage.buckets.get` but can access the files. (#21)
 
 ### Removed
 - removed support for `multi_delete`, as this feature has been deprecated in Shrine
