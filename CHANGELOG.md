@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 1.0.0 - 2017-12-29
+
 ### Added
 - You can specify a project when creating a storage (#16 by @rosskevin)
 - Authentication is now delegated to [`google-cloud-ruby`](http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/master/guides/authentication#projectandcredentiallookup), which enables credentials discovery
