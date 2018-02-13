@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- Moved tests to HTTP.rb (#23 by @janko-m)
+
+### Fixed
+- `presign` now correctly returns the headers needed for the `PUT` request (#23 by @janko-m)
+
 ## 1.0.0 - 2017-12-29
 
 ### Added
@@ -22,6 +28,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 - removed support for `multi_delete`, as this feature has been deprecated in Shrine
 
 ## 0.2.0 - 2017-06-23
+
 ### Changed
 - moved batching to `batch_delete`, so it is used for `multi_delete` (#11 by @janko-m)
 - updated `google-api-client` to 0.13
