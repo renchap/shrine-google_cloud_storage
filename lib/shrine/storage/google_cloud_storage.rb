@@ -117,9 +117,15 @@ class Shrine
       end
 
       def presign(id, **options)
+        headers = {}
+        headers["Content-Type"] = options[:content_type] if options[:content_type]
+        headers["Content-MD5"]  = options[:content_md5] if options[:content_md5]
+        headers.merge!(options[:headers]) if options[:headers]
+
         OpenStruct.new(
           url: storage.signed_url(@bucket, object_name(id), options),
           fields: {},
+          headers: headers
         )
       end
 

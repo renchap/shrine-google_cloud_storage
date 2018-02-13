@@ -181,6 +181,31 @@ wXh0ExlzwgD2xJ0=
         assert_equal({}, presign.fields)
       end
     end
+
+    it "adds headers for header parameters" do
+      gcs = gcs()
+
+      content = "text"
+      md5     = Digest::MD5.base64digest(content)
+
+      presign = gcs.presign('foo',
+        content_type: 'text/plain',
+        content_md5: md5,
+        headers: {
+          'x-goog-acl' => 'private',
+          'x-goog-meta-foo' => 'bar,baz'
+        },
+      )
+
+      expected_headers = {
+        'Content-Type'    => 'text/plain',
+        'Content-MD5'     => md5,
+        'x-goog-acl'      => 'private',
+        'x-goog-meta-foo' => 'bar,baz',
+      }
+
+      assert_equal expected_headers, presign.headers
+    end
   end
 
   describe "#url" do
