@@ -191,6 +191,8 @@ wXh0ExlzwgD2xJ0=
       # upload succeeds
       response = HTTP.headers(presign.headers).put(presign.url, body: content)
       assert_equal 200, response.code
+
+      assert_equal content, HTTP.get(gcs.url('foo', expires: 60)).to_s
     end
   end
 

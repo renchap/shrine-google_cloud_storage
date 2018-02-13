@@ -51,13 +51,10 @@ class Shrine
 
       # URL to the remote file, accepts options for customizing the URL
       def url(id, **options)
-        if(options.key? :expires)
-          signed_url = presign(id, options).url
-          if @host.nil?
-            signed_url
-          else
-            signed_url.gsub(/storage.googleapis.com\/#{@bucket}/, @host)
-          end
+        if options.key? :expires
+          signed_url = storage.signed_url(@bucket, object_name(id), options)
+          signed_url.gsub!(/storage.googleapis.com\/#{@bucket}/, @host) if @host
+          signed_url
         else
           host = @host || "storage.googleapis.com/#{@bucket}"
           "https://#{host}/#{object_name(id)}"
