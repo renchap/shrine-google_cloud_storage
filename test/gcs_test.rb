@@ -1,7 +1,7 @@
 require_relative "test_helper"
 require "shrine/storage/linter"
 require "date"
-require "net/https"
+require "http"
 
 describe Shrine::Storage::GoogleCloudStorage do
   def gcs(options = {})
@@ -56,12 +56,8 @@ wXh0ExlzwgD2xJ0=
       gcs = gcs(default_acl: 'publicRead')
       gcs.upload(image, 'foo')
 
-      url = URI(gcs.url('foo'))
-      Net::HTTP.start(url.host, url.port, use_ssl: true) do |http|
-        response = http.head(url.path)
-
-        assert_equal "200", response.code
-      end
+      response = HTTP.head(gcs.url('foo'))
+      assert_equal 200, response.code
 
       assert @gcs.exists?('foo')
     end
@@ -73,18 +69,12 @@ wXh0ExlzwgD2xJ0=
       gcs.upload(object, 'bar')
 
       # foo needs to not be readable
-      url_foo = URI(gcs.url('foo'))
-      Net::HTTP.start(url_foo.host, url_foo.port, use_ssl: true) do |http|
-        response = http.head(url_foo.path)
-        assert_equal "403", response.code
-      end
+      response = HTTP.head(gcs.url('foo'))
+      assert_equal 403, response.code
 
       # bar needs to be readable
-      url_bar = URI(gcs.url('bar'))
-      Net::HTTP.start(url_bar.host, url_bar.port, use_ssl: true) do |http|
-        response = http.head(url_bar.path)
-        assert_equal "200", response.code
-      end
+      response = HTTP.head(gcs.url('bar'))
+      assert_equal 200, response.code
 
       assert @gcs.exists?('foo')
     end
@@ -98,13 +88,9 @@ wXh0ExlzwgD2xJ0=
 
       assert @gcs.exists?('foo')
 
-      url = URI(gcs.url('foo'))
-      Net::HTTP.start(url.host, url.port, use_ssl: true) do |http|
-        response = http.head(url.path)
-        assert_equal "200", response.code
-        assert_equal 1, response.get_fields('Cache-Control').size
-        assert_equal cache_control, response.get_fields('Cache-Control')[0]
-      end
+      response = HTTP.head(gcs.url('foo'))
+      assert_equal 200, response.code
+      assert_equal cache_control, response.headers["Cache-Control"]
     end
 
     it "does set the configured Cache-Control header when copying an object" do
@@ -115,13 +101,9 @@ wXh0ExlzwgD2xJ0=
       gcs.upload(object, 'bar')
 
       # bar needs to have the correct Cache-Control header
-      url_bar = URI(gcs.url('bar'))
-      Net::HTTP.start(url_bar.host, url_bar.port, use_ssl: true) do |http|
-        response = http.head(url_bar.path)
-        assert_equal "200", response.code
-        assert_equal 1, response.get_fields('Cache-Control').size
-        assert_equal cache_control, response.get_fields('Cache-Control')[0]
-      end
+      response = HTTP.head(gcs.url('bar'))
+      assert_equal 200, response.code
+      assert_equal cache_control, response.headers["Cache-Control"]
     end
   end
 
@@ -137,7 +119,7 @@ wXh0ExlzwgD2xJ0=
   end
 
   describe "#presign" do
-    it "signs a GET url with a signing key and issuer" do
+    it "signs a PUT url with a signing key and issuer" do
       gcs = gcs()
       gcs.upload(image, 'foo')
 
@@ -169,7 +151,7 @@ wXh0ExlzwgD2xJ0=
       end
     end
 
-    it "signs a GET url with discovered credentials" do
+    it "signs a PUT url with discovered credentials" do
       gcs = gcs()
       gcs.upload(image, 'foo')
 
@@ -180,6 +162,37 @@ wXh0ExlzwgD2xJ0=
         assert presign.url.include? "Signature=" # each tester's discovered signature will be different
         assert_equal({}, presign.fields)
       end
+    end
+
+    it "adds headers for header parameters" do
+      gcs = gcs()
+
+      content = "text"
+      md5     = Digest::MD5.base64digest(content)
+
+      presign = gcs.presign('foo',
+        content_type: 'text/plain',
+        content_md5: md5,
+        headers: {
+          'x-goog-acl' => 'private',
+          'x-goog-meta-foo' => 'bar,baz'
+        },
+      )
+
+      expected_headers = {
+        'Content-Type'    => 'text/plain',
+        'Content-MD5'     => md5,
+        'x-goog-acl'      => 'private',
+        'x-goog-meta-foo' => 'bar,baz',
+      }
+
+      assert_equal expected_headers, presign.headers
+
+      # upload succeeds
+      response = HTTP.headers(presign.headers).put(presign.url, body: content)
+      assert_equal 200, response.code
+
+      assert_equal content, HTTP.get(gcs.url('foo', expires: 60)).to_s
     end
   end
 
