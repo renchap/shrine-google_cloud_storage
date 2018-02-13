@@ -119,7 +119,7 @@ wXh0ExlzwgD2xJ0=
   end
 
   describe "#presign" do
-    it "signs a GET url with a signing key and issuer" do
+    it "signs a PUT url with a signing key and issuer" do
       gcs = gcs()
       gcs.upload(image, 'foo')
 
@@ -151,7 +151,7 @@ wXh0ExlzwgD2xJ0=
       end
     end
 
-    it "signs a GET url with discovered credentials" do
+    it "signs a PUT url with discovered credentials" do
       gcs = gcs()
       gcs.upload(image, 'foo')
 
@@ -187,6 +187,10 @@ wXh0ExlzwgD2xJ0=
       }
 
       assert_equal expected_headers, presign.headers
+
+      # upload succeeds
+      response = HTTP.headers(presign.headers).put(presign.url, body: content)
+      assert_equal 200, response.code
     end
   end
 

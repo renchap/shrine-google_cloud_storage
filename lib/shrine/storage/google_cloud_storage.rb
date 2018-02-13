@@ -123,7 +123,7 @@ class Shrine
         headers.merge!(options[:headers]) if options[:headers]
 
         OpenStruct.new(
-          url: storage.signed_url(@bucket, object_name(id), options),
+          url: storage.signed_url(@bucket, object_name(id), method: "PUT", **options),
           fields: {},
           headers: headers
         )
