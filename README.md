@@ -96,5 +96,5 @@ GCS_DEBUG=true
 [MIT](http://opensource.org/licenses/MIT)
 
 [Google Cloud Storage]: https://cloud.google.com/storage/
-[Shrine]: https://github.com/janko-m/shrine
+[Shrine]: https://github.com/shrinerb/shrine
 [Project and Credential Lookup]: http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/master/guides/authentication#projectandcredentiallookup
