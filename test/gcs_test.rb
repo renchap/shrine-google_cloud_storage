@@ -131,11 +131,12 @@ wXh0ExlzwgD2xJ0=
           issuer: sa[:client_email],
         )
 
-        assert presign.url.start_with? "https://storage.googleapis.com/#{gcs.bucket}/foo?"
-        assert presign.url.include? "Expires=1486650200"
-        assert presign.url.include? "GoogleAccessId=test-shrine%40test.google"
-        assert presign.url.include? "Signature=" # each tester's discovered signature will be different
-        assert_equal({}, presign.fields)
+        assert_equal :put, presign[:method]
+        assert presign[:url].start_with? "https://storage.googleapis.com/#{gcs.bucket}/foo?"
+        assert presign[:url].include? "Expires=1486650200"
+        assert presign[:url].include? "GoogleAccessId=test-shrine%40test.google"
+        assert presign[:url].include? "Signature=" # each tester's discovered signature will be different
+        assert_equal({}, presign[:headers])
       end
     end
 
@@ -144,10 +145,11 @@ wXh0ExlzwgD2xJ0=
 
       Time.stub :now, Time.at(1486649900) do
         presign = gcs.presign('nonexisting')
-        assert presign.url.include? "https://storage.googleapis.com/#{gcs.bucket}/nonexisting?"
-        assert presign.url.include? "Expires=1486650200"
-        assert presign.url.include? "Signature=" # each tester's discovered signature will be different
-        assert_equal({}, presign.fields)
+        assert_equal :put, presign[:method]
+        assert presign[:url].include? "https://storage.googleapis.com/#{gcs.bucket}/nonexisting?"
+        assert presign[:url].include? "Expires=1486650200"
+        assert presign[:url].include? "Signature=" # each tester's discovered signature will be different
+        assert_equal({}, presign[:headers])
       end
     end
 
@@ -157,10 +159,11 @@ wXh0ExlzwgD2xJ0=
 
       Time.stub :now, Time.at(1486649900) do
         presign = gcs.presign('foo')
-        assert presign.url.include? "https://storage.googleapis.com/#{gcs.bucket}/foo?"
-        assert presign.url.include? "Expires=1486650200"
-        assert presign.url.include? "Signature=" # each tester's discovered signature will be different
-        assert_equal({}, presign.fields)
+        assert_equal :put, presign[:method]
+        assert presign[:url].include? "https://storage.googleapis.com/#{gcs.bucket}/foo?"
+        assert presign[:url].include? "Expires=1486650200"
+        assert presign[:url].include? "Signature=" # each tester's discovered signature will be different
+        assert_equal({}, presign[:headers])
       end
     end
 
@@ -186,10 +189,10 @@ wXh0ExlzwgD2xJ0=
         'x-goog-meta-foo' => 'bar,baz',
       }
 
-      assert_equal expected_headers, presign.headers
+      assert_equal expected_headers, presign[:headers]
 
       # upload succeeds
-      response = HTTP.headers(presign.headers).put(presign.url, body: content)
+      response = HTTP.headers(presign[:headers]).put(presign[:url], body: content)
       assert_equal 200, response.code
 
       assert_equal content, HTTP.get(gcs.url('foo', expires: 60)).to_s
