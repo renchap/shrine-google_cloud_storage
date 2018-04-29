@@ -106,10 +106,9 @@ class Shrine
       def clear!
         prefix = "#{@prefix}/" if @prefix
         files = get_bucket.files prefix: prefix
-        batch_delete(files.lazy.map(&:name))
         loop do
-          break if !files.next?
-          batch_delete(files.next.lazy.map(&:name))
+          batch_delete(files.lazy.map(&:name))
+          files = files.next or break
         end
       end
 
