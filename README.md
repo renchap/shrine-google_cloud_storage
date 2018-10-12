@@ -66,13 +66,22 @@ cp .env.sample .env
 
 #### Option 2 - manual setup
 
-Create your own bucket and provide variables that allow for [project and credential lookup](http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication#projectandcredentiallookup).
+Create your own bucket and [set up a service account](https://github.com/googleapis/google-cloud-ruby/blob/master/google-cloud-storage/AUTHENTICATION.md#creating-a-service-account) to access the bucket. Download the JSON auth key and then define your credentials.  
 For example:
 
 ```sh
 GCS_BUCKET=shrine-gcs-test-my-project
 GOOGLE_CLOUD_PROJECT=my-project
 GOOGLE_CLOUD_KEYFILE=/Users/user/.gcp/my-project/shrine-gcs-test.json
+```
+
+Be sure you are setting the Google Cloud config using the variables just created.
+
+```sh
+Google::Cloud.configure do |config|
+    config.project_id = GOOGLE_CLOUD_PROJECT
+    config.keyfile = GOOGLE_CLOUD_KEYFILE
+end
 ```
 
 **Warning**: all content of the bucket is cleared between tests, create a new one only for this usage!
