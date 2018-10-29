@@ -112,17 +112,16 @@ class Shrine
         end
       end
 
+      # returns request data (:method, :url, and :headers) for direct uploads
       def presign(id, **options)
+        url = storage.signed_url(@bucket, object_name(id), method: "PUT", **options)
+
         headers = {}
         headers["Content-Type"] = options[:content_type] if options[:content_type]
         headers["Content-MD5"]  = options[:content_md5] if options[:content_md5]
         headers.merge!(options[:headers]) if options[:headers]
 
-        OpenStruct.new(
-          url: storage.signed_url(@bucket, object_name(id), method: "PUT", **options),
-          fields: {},
-          headers: headers
-        )
+        { method: :put, url: url, headers: headers }
       end
 
       def object_name(id)
