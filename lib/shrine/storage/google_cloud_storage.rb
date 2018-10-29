@@ -38,7 +38,7 @@ class Shrine
           end
           file
         else
-          Shrine.with_file(io) do |file|
+          with_file(io) do |file|
               get_bucket.create_file(
                   file,
                   object_name(id), # path
@@ -155,6 +155,14 @@ class Shrine
         io.is_a?(UploadedFile) &&
           io.storage.is_a?(Storage::GoogleCloudStorage)
         # TODO: add a check for the credentials
+      end
+
+      def with_file(io)
+        if io.respond_to?(:tempfile) # ActionDispatch::Http::UploadedFile
+          yield tempfile
+        else
+          Shrine.with_file(io) { |file| yield file }
+        end
       end
 
       def batch_delete(object_names)
