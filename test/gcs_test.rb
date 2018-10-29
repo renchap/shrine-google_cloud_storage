@@ -116,6 +116,16 @@ wXh0ExlzwgD2xJ0=
       assert @gcs.exists?('foo')
       assert @gcs.exists?('pre')
     end
+
+    it "removes only files for which block returns true" do
+      @gcs.upload(image, 'foo')
+      @gcs.upload(image, 'pre')
+
+      @gcs.clear! { |file| file.name == 'foo' }
+
+      assert !@gcs.exists?('foo')
+      assert @gcs.exists?('pre')
+    end
   end
 
   describe "#presign" do
