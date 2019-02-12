@@ -157,7 +157,7 @@ class Shrine
 
       def with_file(io)
         if io.respond_to?(:tempfile) # ActionDispatch::Http::UploadedFile
-          yield tempfile
+          yield io.tempfile
         else
           Shrine.with_file(io) { |file| yield file }
         end
