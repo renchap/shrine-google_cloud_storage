@@ -24,23 +24,17 @@ class FakeIO
   delegate [:read, :size, :close, :eof?, :rewind] => :@io
 end
 
-class FakeUploadedFile
-  def initialize(io)
-    @io = io
-  end
-
-  def to_io
-    @io
-  end
-end
-
-class FakeOldUploadedFile
+class RailsFile
   def initialize(io)
     @io = io
   end
 
   def tempfile
     @io
+  end
+
+  def path
+    @io.path
   end
 end
 

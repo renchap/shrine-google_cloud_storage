@@ -252,20 +252,9 @@ wXh0ExlzwgD2xJ0=
       assert @gcs.exists?(file_key)
     end
 
-    it 'uploads a non io object that responds to .to_io' do
+    it 'uploads Rails file objects' do
       io = StringIO.new("data")
-      file = FakeUploadedFile.new(io)
-
-      file_key = random_key
-
-      @gcs.upload(file, file_key)
-
-      assert @gcs.exists?(file_key)
-    end
-
-    it 'uploads a non io object that responds to .tempfile' do
-      io = StringIO.new("data")
-      file = FakeOldUploadedFile.new(io)
+      file = RailsFile.new(io)
 
       file_key = random_key
 
