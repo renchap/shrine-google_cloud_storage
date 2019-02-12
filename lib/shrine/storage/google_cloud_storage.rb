@@ -101,15 +101,22 @@ class Shrine
       # deletes the file from the storage
       def delete(id)
         file = get_file(id)
-        file.delete unless file.nil?
+        delete_file(file) unless file.nil?
       end
 
-      # Otherwise deletes all objects from the storage.
-      def clear!
+      # deletes all objects from the storage
+      # If block is givem, deletes only objects for which
+      # the block evaluates to true.
+      #
+      # clear!
+      # # or
+      # clear! { |file| file.updated_at < 1.week.ago }
+      def clear!(&block)
         prefix = "#{@prefix}/" if @prefix
         files = get_bucket.files prefix: prefix
+
         loop do
-          batch_delete(files.lazy.map(&:name))
+          files.each { |file| delete_file(file) if block.nil? || block.call(file) }
           files = files.next or break
         end
       end
@@ -163,10 +170,12 @@ class Shrine
         end
       end
 
-      def batch_delete(object_names)
-        bucket = get_bucket
-        object_names.each do |name|
-          bucket.file(name).delete
+      # deletes file with ignoring NotFoundError
+      def delete_file(file)
+        begin
+          file.delete
+        rescue Google::Cloud::NotFoundError
+          # we're fine if the file was already deleted
         end
       end
 
