@@ -19,5 +19,5 @@ Gem::Specification.new do |gem|
   gem.add_development_dependency "rake"
   gem.add_development_dependency "minitest"
   gem.add_development_dependency "dotenv"
-  gem.add_development_dependency "http", "~> 3.0"
+  gem.add_development_dependency "http", "~> 4.0"
 end
