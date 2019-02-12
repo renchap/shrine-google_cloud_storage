@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    shrine-google_cloud_storage (1.0.1)
+    shrine-google_cloud_storage (2.0.0)
       google-cloud-storage (~> 1.6)
       shrine (~> 2.11)
 

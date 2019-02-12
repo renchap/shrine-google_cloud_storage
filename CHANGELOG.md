@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 2.0.0 - 2019-02-12
+
+### Added
+- `clear!` now accepts a block for conditional deletion. If a block is provided, it will only delete the files for which the block evaluates to `true` (#31 by @hwo411)
+
+### Changed
+- `presign` has been updated to use the new Shrine 2.11 API. This is a breaking change if you use `presign`, and bumps the `shrine` dependency to `>= 2.11` (#25 by @janko)
+- This gem now uses `Shrine.with_file`, introduced in Shrine 2.11 (#29 by @janko)
+
+### Fixed
+- `clear!` was potentially not deleting every file (#26 by @janko)
+
 ## 1.0.1 - 2018-02-13
 
 ### Changed
