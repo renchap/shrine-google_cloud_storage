@@ -66,21 +66,22 @@ class Shrine
       # Opens the remote file and returns it as `Down::ChunkedIO` object.
       # @return [Down::ChunkedIO] object
       # @see https://github.com/janko-m/down#downchunkedio
-      def open(id)
+      def open(id, rewindable: true, **options)
         file = get_file(id)
 
         # create enumerator which lazily yields chunks of downloaded content
         chunks = Enumerator.new do |yielder|
           # trick to get google client to stream the download
           proc_io = ProcIO.new { |data| yielder << data }
-          file.download(proc_io, verify: :none)
+          file.download(proc_io, verify: :none, **options)
         end
 
         # wrap chunks in an IO-like object which downloads when needed
         Down::ChunkedIO.new(
-          chunks: chunks,
-          size:   file.size,
-          data:   { file: file }
+          chunks:     chunks,
+          size:       file.size,
+          rewindable: rewindable,
+          data:       { file: file },
         )
       end
 

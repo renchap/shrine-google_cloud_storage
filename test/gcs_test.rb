@@ -276,11 +276,23 @@ wXh0ExlzwgD2xJ0=
 
   describe "#open" do
     it "returns an IO-like object around the file content" do
-      gcs.upload(image, 'foo')
+      gcs.upload(fakeio('file'), 'foo')
       io = gcs.open('foo')
-      assert_equal(image.size, io.size)
-      assert_equal(image.read, io.read)
+      assert_equal(4,      io.size)
+      assert_equal('file', io.read)
       assert_instance_of(Google::Cloud::Storage::File, io.data[:file])
+    end
+
+    it "accepts :rewindable" do
+      gcs.upload(fakeio, 'foo')
+      io = gcs.open('foo', rewindable: false)
+      assert_raises(IOError) { io.rewind }
+    end
+
+    it "accepts additional download options" do
+      gcs.upload(fakeio('file'), 'foo')
+      io = gcs.open('foo', range: 1..2)
+      assert_equal('il', io.read)
     end
   end
 end
