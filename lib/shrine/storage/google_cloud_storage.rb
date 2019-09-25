@@ -83,6 +83,8 @@ class Shrine
           rewindable: rewindable,
           data:       { file: file },
         )
+      rescue # ?
+        raise Shrine::FileNotFound, "file #{id.inspect} not found on storage"
       end
 
       # checks if the file exists on the storage
