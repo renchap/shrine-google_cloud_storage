@@ -13,7 +13,7 @@ Gem::Specification.new do |gem|
   gem.files        = Dir["README.md", "LICENSE.txt", "lib/**/*.rb", "shrine-google_cloud_storage.gemspec"]
   gem.require_path = "lib"
 
-  gem.add_dependency "shrine", "~> 2.11"
+  gem.add_dependency "shrine", "~> 3.0"
   gem.add_dependency "google-cloud-storage", "~> 1.6"
 
   gem.add_development_dependency "rake"
