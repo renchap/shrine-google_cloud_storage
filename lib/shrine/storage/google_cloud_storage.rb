@@ -63,13 +63,6 @@ class Shrine
         end
       end
 
-      # Downloads the file from GCS, and returns a `Tempfile`.
-      def download(id)
-        tempfile = Tempfile.new(["googlestorage", File.extname(id)], binmode: true)
-        get_file(id).download tempfile.path
-        tempfile.tap(&:open)
-      end
-
       # Opens the remote file and returns it as `Down::ChunkedIO` object.
       # @return [Down::ChunkedIO] object
       # @see https://github.com/janko-m/down#downchunkedio
