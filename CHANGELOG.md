@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 2.0.1 - 2019-10-01
+
+### Changed
+- "google-cloud-storage" dependency has been updated to version 1.21.1.
+
 ## 2.0.0 - 2019-02-12
 
 ### Added

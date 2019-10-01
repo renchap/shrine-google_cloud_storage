@@ -1,6 +1,6 @@
 Gem::Specification.new do |gem|
   gem.name          = "shrine-google_cloud_storage"
-  gem.version       = "2.0.0"
+  gem.version       = "2.0.1"
 
   gem.required_ruby_version = ">= 2.1"
 
@@ -14,7 +14,7 @@ Gem::Specification.new do |gem|
   gem.require_path = "lib"
 
   gem.add_dependency "shrine", "~> 2.11"
-  gem.add_dependency "google-cloud-storage", "~> 1.6"
+  gem.add_dependency "google-cloud-storage", "~> 1.21.1"
 
   gem.add_development_dependency "rake"
   gem.add_development_dependency "minitest"
