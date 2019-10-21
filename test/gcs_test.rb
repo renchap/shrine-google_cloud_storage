@@ -34,9 +34,9 @@ wXh0ExlzwgD2xJ0=
 
   before do
     @gcs = gcs
-    shrine = Class.new(Shrine)
-    shrine.storages = { gcs: @gcs }
-    @uploader = shrine.new(:gcs)
+    @shrine = Class.new(Shrine)
+    @shrine.storages = { gcs: @gcs }
+    @uploader = @shrine.new(:gcs)
   end
 
   after do
@@ -84,13 +84,14 @@ wXh0ExlzwgD2xJ0=
     it "does set the Cache-Control header when uploading a new object" do
       cache_control = 'public, max-age=7200'
       gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
-      gcs.upload(image, 'foo')
+      gcs.upload(image, 'foo', { content_type: 'image/jpeg' })
 
       assert @gcs.exists?('foo')
 
       response = HTTP.head(gcs.url('foo'))
       assert_equal 200, response.code
       assert_equal cache_control, response.headers["Cache-Control"]
+      assert_equal "image/jpeg", response.headers["Content-Type"]
     end
 
     it "does set the configured Cache-Control header when copying an object" do
@@ -271,6 +272,25 @@ wXh0ExlzwgD2xJ0=
       @gcs.upload(file, file_key)
 
       assert @gcs.exists?(file_key)
+    end
+
+    it 'copies an existing uploaded file' do
+      cache_control = 'public, max-age=7200'
+
+      gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
+      gcs.upload(image, 'test.jpg', { content_type: 'image/jpeg', cache_control: cache_control })
+
+      uploaded_file = @shrine.uploaded_file(id: 'test.jpg', storage: 'gcs')
+      gcs.upload(uploaded_file, 'test1.jpg')
+
+      assert gcs.exists?('test1.jpg')
+
+      response = HTTP.head(gcs.url('test1.jpg'))
+      assert_equal 200, response.code
+
+      # Let's ensure it correctly copies the metadata as well
+      assert_equal cache_control, response.headers["Cache-Control"]
+      assert_equal "image/jpeg", response.headers["Content-Type"]
     end
   end
 
