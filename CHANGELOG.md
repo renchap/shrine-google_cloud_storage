@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 2.0.1 - 2019-10-21
+
 ### Fixed
 - When copying a file from an existing GCS object, the content type was not properly copied. This is a bug in the `google-cloud-storage` gem, a workaround has been added so it now works currently (issue #36)
 
