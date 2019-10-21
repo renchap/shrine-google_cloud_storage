@@ -31,6 +31,11 @@ class Shrine
               object_name(id), # dest_path - the path to copy the file to in the given bucket
               acl: @default_acl
           ) do |f|
+            # Workaround a bug in File#copy where the content-type is not copied if you provide a block
+            # See https://github.com/renchap/shrine-google_cloud_storage/issues/36
+            # See https://github.com/googleapis/google-cloud-ruby/issues/4254
+            f.content_type = existing_file.content_type
+
             # update the additional options
             @object_options.merge(options).each_pair do |key, value|
               f.send("#{key}=", value)
