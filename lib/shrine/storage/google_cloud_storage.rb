@@ -74,6 +74,8 @@ class Shrine
       def open(id, rewindable: true, **options)
         file = get_file(id)
 
+        raise Shrine::FileNotFound, "file #{id.inspect} not found on storage" unless file
+
         # create enumerator which lazily yields chunks of downloaded content
         chunks = Enumerator.new do |yielder|
           # trick to get google client to stream the download
@@ -88,8 +90,6 @@ class Shrine
           rewindable: rewindable,
           data:       { file: file },
         )
-      rescue # ?
-        raise Shrine::FileNotFound, "file #{id.inspect} not found on storage"
       end
 
       # checks if the file exists on the storage

@@ -314,5 +314,9 @@ wXh0ExlzwgD2xJ0=
       io = gcs.open('foo', range: 1..2)
       assert_equal('il', io.read)
     end
+
+    it "raises a Shrine::FileNotFound exception when a file does not exists" do
+      assert_raises(Shrine::FileNotFound) { gcs.open('foo')}
+    end
   end
 end
