@@ -156,7 +156,7 @@ class Shrine
         opts[:project] = @project if @project
         opts[:credentials] = @credentials if @credentials
 
-        @storage = Google::Cloud::Storage.new(project: @project)
+        @storage = Google::Cloud::Storage.new(opts)
       end
 
       def copyable?(io)
