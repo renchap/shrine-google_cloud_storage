@@ -1,4 +1,5 @@
 require_relative "test_helper"
+require 'securerandom'
 require "shrine/storage/linter"
 require "date"
 require "http"
@@ -8,6 +9,10 @@ describe Shrine::Storage::GoogleCloudStorage do
     options[:bucket] ||= ENV.fetch("GCS_BUCKET")
 
     Shrine::Storage::GoogleCloudStorage.new(options)
+  end
+
+  def generate_test_filename
+    SecureRandom.hex
   end
 
   def service_account
@@ -53,56 +58,66 @@ wXh0ExlzwgD2xJ0=
 
   describe "default_acl" do
     it "does set default acl when uploading a new object" do
-      gcs = gcs(default_acl: 'publicRead')
-      gcs.upload(image, 'foo')
+      filename = generate_test_filename
 
-      response = HTTP.head(gcs.url('foo'))
+      gcs = gcs(default_acl: 'publicRead')
+      gcs.upload(image, filename)
+
+      response = HTTP.head(gcs.url(filename))
       assert_equal 200, response.code
 
-      assert @gcs.exists?('foo')
+      assert @gcs.exists?(filename)
     end
 
     it "does set default acl when copying an object" do
+      filename1 = generate_test_filename
+      filename2 = generate_test_filename
+
       gcs = gcs(default_acl: 'publicRead')
-      object = @uploader.upload(image, location: 'foo')
+      object = @uploader.upload(image, location: filename1)
 
-      gcs.upload(object, 'bar')
+      gcs.upload(object, filename2)
 
-      # foo needs to not be readable
-      response = HTTP.head(gcs.url('foo'))
+      # filename1 needs to not be readable
+      response = HTTP.head(gcs.url(filename1))
       assert_equal 403, response.code
 
-      # bar needs to be readable
-      response = HTTP.head(gcs.url('bar'))
+      # filename2 needs to be readable
+      response = HTTP.head(gcs.url(filename2))
       assert_equal 200, response.code
 
-      assert @gcs.exists?('foo')
+      assert @gcs.exists?(filename1)
     end
   end
 
   describe "object_options" do
     it "does set the Cache-Control header when uploading a new object" do
+      filename = generate_test_filename
+
       cache_control = 'public, max-age=7200'
       gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
-      gcs.upload(image, 'foo', { content_type: 'image/jpeg' })
+      gcs.upload(image, filename, { content_type: 'image/jpeg' })
 
-      assert @gcs.exists?('foo')
+      assert @gcs.exists?(filename)
 
-      response = HTTP.head(gcs.url('foo'))
+      response = HTTP.head(gcs.url(filename))
       assert_equal 200, response.code
       assert_equal cache_control, response.headers["Cache-Control"]
       assert_equal "image/jpeg", response.headers["Content-Type"]
     end
 
     it "does set the configured Cache-Control header when copying an object" do
+      filename1 = generate_test_filename
+      filename2 = generate_test_filename
+
       cache_control = 'public, max-age=7200'
       gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
-      object = @uploader.upload(image, location: 'foo')
+      object = @uploader.upload(image, location: filename1)
 
-      gcs.upload(object, 'bar')
+      gcs.upload(object, filename2)
 
-      # bar needs to have the correct Cache-Control header
-      response = HTTP.head(gcs.url('bar'))
+      # filename2 needs to have the correct Cache-Control header
+      response = HTTP.head(gcs.url(filename2))
       assert_equal 200, response.code
       assert_equal cache_control, response.headers["Cache-Control"]
     end
@@ -110,40 +125,47 @@ wXh0ExlzwgD2xJ0=
 
   describe "#clear!" do
     it "does not empty the whole bucket when a prefix is set" do
-      gcs_with_prefix = gcs(prefix: 'pre')
-      @gcs.upload(image, 'foo')
-      @gcs.upload(image, 'pre') # to ensure a file with the prefix name is not deleted
+      filename = generate_test_filename
+      prefix = generate_test_filename
+
+      gcs_with_prefix = gcs(prefix: prefix)
+      @gcs.upload(image, filename)
+      @gcs.upload(image, prefix) # to ensure a file with the prefix name is not deleted
       gcs_with_prefix.clear!
-      assert @gcs.exists?('foo')
-      assert @gcs.exists?('pre')
+      assert @gcs.exists?(filename)
+      assert @gcs.exists?(prefix)
     end
 
     it "removes only files for which block returns true" do
-      @gcs.upload(image, 'foo')
-      @gcs.upload(image, 'pre')
+      filename1 = generate_test_filename
+      filename2 = generate_test_filename
+      @gcs.upload(image, filename1)
+      @gcs.upload(image, filename2)
 
-      @gcs.clear! { |file| file.name == 'foo' }
+      @gcs.clear! { |file| file.name == filename1 }
 
-      assert !@gcs.exists?('foo')
-      assert @gcs.exists?('pre')
+      assert !@gcs.exists?(filename1)
+      assert @gcs.exists?(filename2)
     end
   end
 
   describe "#presign" do
     it "signs a PUT url with a signing key and issuer" do
+      filename = generate_test_filename
+
       gcs = gcs()
-      gcs.upload(image, 'foo')
+      gcs.upload(image, filename)
 
       sa = service_account
       Time.stub :now, Time.at(1486649900) do
         presign = gcs.presign(
-          'foo',
+          filename,
           signing_key: sa[:private_key],
           issuer: sa[:client_email],
         )
 
         assert_equal :put, presign[:method]
-        assert presign[:url].start_with? "https://storage.googleapis.com/#{gcs.bucket}/foo?"
+        assert presign[:url].start_with? "https://storage.googleapis.com/#{gcs.bucket}/#{filename}?"
         assert presign[:url].include? "Expires=1486650200"
         assert presign[:url].include? "GoogleAccessId=test-shrine%40test.google"
         assert presign[:url].include? "Signature=" # each tester's discovered signature will be different
@@ -165,13 +187,15 @@ wXh0ExlzwgD2xJ0=
     end
 
     it "signs a PUT url with discovered credentials" do
+      filename = generate_test_filename
+
       gcs = gcs()
-      gcs.upload(image, 'foo')
+      gcs.upload(image, filename)
 
       Time.stub :now, Time.at(1486649900) do
-        presign = gcs.presign('foo')
+        presign = gcs.presign(filename)
         assert_equal :put, presign[:method]
-        assert presign[:url].include? "https://storage.googleapis.com/#{gcs.bucket}/foo?"
+        assert presign[:url].include? "https://storage.googleapis.com/#{gcs.bucket}/#{filename}?"
         assert presign[:url].include? "Expires=1486650200"
         assert presign[:url].include? "Signature=" # each tester's discovered signature will be different
         assert_equal({}, presign[:headers])
@@ -179,12 +203,14 @@ wXh0ExlzwgD2xJ0=
     end
 
     it "adds headers for header parameters" do
+      filename = generate_test_filename
+
       gcs = gcs()
 
       content = "text"
       md5     = Digest::MD5.base64digest(content)
 
-      presign = gcs.presign('foo',
+      presign = gcs.presign(filename,
         content_type: 'text/plain',
         content_md5: md5,
         headers: {
@@ -206,32 +232,35 @@ wXh0ExlzwgD2xJ0=
       response = HTTP.headers(presign[:headers]).put(presign[:url], body: content)
       assert_equal 200, response.code
 
-      assert_equal content, HTTP.get(gcs.url('foo', expires: 60)).to_s
+      assert_equal content, HTTP.get(gcs.url(filename, expires: 60)).to_s
     end
   end
 
   describe "#url" do
     describe "signed" do
       it "url with `expires` signs a GET url with discovered credentials" do
+        filename = generate_test_filename
+
         gcs = gcs()
-        gcs.upload(image, 'foo')
+        gcs.upload(image, filename)
 
         Time.stub :now, Time.at(1486649900) do
-          presigned_url = gcs.url('foo', expires: 300)
-          assert presigned_url.include? "https://storage.googleapis.com/#{gcs.bucket}/foo?"
+          presigned_url = gcs.url(filename, expires: 300)
+          assert presigned_url.include? "https://storage.googleapis.com/#{gcs.bucket}/#{filename}?"
           assert presigned_url.include? "Expires=1486650200"
           assert presigned_url.include? "Signature=" # each tester's discovered signature will be different
         end
       end
 
       it "url with `expires` signs a GET url with discovered credentials and specified host" do
+        filename = generate_test_filename
         host = "123.mycdn.net"
         gcs = gcs(host: host)
-        gcs.upload(image, 'foo')
+        gcs.upload(image, filename)
 
         Time.stub :now, Time.at(1486649900) do
-          presigned_url = gcs.url('foo', expires: 300)
-          assert presigned_url.include? "https://#{host}/foo?"
+          presigned_url = gcs.url(filename, expires: 300)
+          assert presigned_url.include? "https://#{host}/#{filename}?"
           assert presigned_url.include? "Expires=1486650200"
           assert presigned_url.include? "Signature=" # each tester's discovered signature will be different
         end
@@ -239,16 +268,20 @@ wXh0ExlzwgD2xJ0=
     end
 
     it "provides a storage.googleapis.com url by default" do
+      filename = generate_test_filename
+
       gcs = gcs()
-      url = gcs.url('foo')
-      assert_equal("https://storage.googleapis.com/#{gcs.bucket}/foo", url)
+      url = gcs.url(filename)
+      assert_equal("https://storage.googleapis.com/#{gcs.bucket}/#{filename}", url)
     end
 
     it "accepts :host for specifying CDN links" do
+      filename = generate_test_filename
+
       host = "123.mycdn.net"
       gcs = gcs(host: host)
-      url = gcs.url('foo')
-      assert_equal("https://123.mycdn.net/foo", url)
+      url = gcs.url(filename)
+      assert_equal("https://123.mycdn.net/#{filename}", url)
     end
   end
 
@@ -296,10 +329,12 @@ wXh0ExlzwgD2xJ0=
 
   describe "#open" do
     it "returns an IO-like object around the file content" do
-      gcs.upload(fakeio('file'), 'foo')
-      io = gcs.open('foo')
-      assert_equal(4,      io.size)
-      assert_equal('file', io.read)
+      filename = generate_test_filename
+
+      gcs.upload(fakeio(filename), filename)
+      io = gcs.open(filename)
+      assert_equal(32,       io.size)
+      assert_equal(filename, io.read)
       assert_instance_of(Google::Cloud::Storage::File, io.data[:file])
     end
 
