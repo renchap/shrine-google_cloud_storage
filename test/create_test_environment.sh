@@ -58,13 +58,7 @@ fi
 # Display every command executed from now
 set -x
 
-gcloud projects create $GOOGLE_CLOUD_PROJECT || read -p "Looks like this service accounts exists. If so, continue? (y/n)? " CONT
-
-if [ "$CONT" == "n" ]
-then
-  echo "Aborting!"
-  exit 3
-fi
+gcloud projects create $GOOGLE_CLOUD_PROJECT
 
 if [ $? -eq 1 ]
 then
@@ -79,7 +73,7 @@ gcloud beta billing projects link $GOOGLE_CLOUD_PROJECT --billing-account=$GOOGL
 
 gcloud iam service-accounts create $GCS_SA \
     --project=$GOOGLE_CLOUD_PROJECT \
-    --display-name $GCS_SA || true
+    --display-name $GCS_SA
 
 GCS_SA_EMAIL=$(gcloud iam service-accounts list \
     --project=$GOOGLE_CLOUD_PROJECT \
