@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 3.0.1 - 2020-04-02
+
+- Allow credentials to be manually specified when creating the Storage (#35 by @ianks)
+
 ## 3.0.0 - 2019-10-21
 
 ### Changed
