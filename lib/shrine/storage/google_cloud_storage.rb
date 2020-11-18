@@ -30,7 +30,7 @@ class Shrine
           file = existing_file.copy(
               @bucket, # dest_bucket_or_path - the bucket to copy the file to
               object_name(id), # dest_path - the path to copy the file to in the given bucket
-              acl: @default_acl
+              acl: options.fetch(:acl) { @default_acl }
           ) do |f|
             # Workaround a bug in File#copy where the content-type is not copied if you provide a block
             # See https://github.com/renchap/shrine-google_cloud_storage/issues/36
@@ -50,7 +50,7 @@ class Shrine
                   object_name(id), # path
                   @object_options.merge(
                       content_type: shrine_metadata["mime_type"],
-                      acl: @default_acl
+                      acl: options.fetch(:acl) { @default_acl }
                   ).merge(options)
               )
           end

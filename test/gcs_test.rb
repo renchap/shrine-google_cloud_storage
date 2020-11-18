@@ -88,6 +88,18 @@ wXh0ExlzwgD2xJ0=
 
       assert @gcs.exists?(filename1)
     end
+
+    it "allows for the acl to be set on an object level" do
+      filename = generate_test_filename
+
+      gcs = gcs(default_acl: 'private')
+      gcs.upload(image, filename, acl: 'publicRead')
+
+      response = HTTP.head(gcs.url(filename))
+      assert_equal 200, response.code
+
+      assert @gcs.exists?(filename)
+    end
   end
 
   describe "object_options" do
