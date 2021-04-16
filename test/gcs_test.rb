@@ -8,7 +8,7 @@ describe Shrine::Storage::GoogleCloudStorage do
   def gcs(options = {})
     options[:bucket] ||= ENV.fetch("GCS_BUCKET")
 
-    Shrine::Storage::GoogleCloudStorage.new(options)
+    Shrine::Storage::GoogleCloudStorage.new(**options)
   end
 
   def generate_test_filename
@@ -108,7 +108,7 @@ wXh0ExlzwgD2xJ0=
 
       cache_control = 'public, max-age=7200'
       gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
-      gcs.upload(image, filename, { content_type: 'image/jpeg' })
+      gcs.upload(image, filename, **{ content_type: 'image/jpeg' })
 
       assert @gcs.exists?(filename)
 
@@ -323,7 +323,7 @@ wXh0ExlzwgD2xJ0=
       cache_control = 'public, max-age=7200'
 
       gcs = gcs(default_acl: 'publicRead', object_options: { cache_control: cache_control })
-      gcs.upload(image, 'test.jpg', { content_type: 'image/jpeg', cache_control: cache_control })
+      gcs.upload(image, 'test.jpg', **{ content_type: 'image/jpeg', cache_control: cache_control })
 
       uploaded_file = @shrine.uploaded_file(id: 'test.jpg', storage: 'gcs')
       gcs.upload(uploaded_file, 'test1.jpg')

@@ -48,7 +48,7 @@ class Shrine
               get_bucket.create_file(
                   file,
                   object_name(id), # path
-                  @object_options.merge(
+                  **@object_options.merge(
                       content_type: shrine_metadata["mime_type"],
                       acl: options.fetch(:acl) { @default_acl }
                   ).merge(options)
@@ -60,7 +60,7 @@ class Shrine
       # URL to the remote file, accepts options for customizing the URL
       def url(id, **options)
         if options.key? :expires
-          signed_url = storage.signed_url(@bucket, object_name(id), options)
+          signed_url = storage.signed_url(@bucket, object_name(id), **options)
           signed_url.gsub!(/storage.googleapis.com\/#{@bucket}/, @host) if @host
           signed_url
         else
@@ -157,7 +157,7 @@ class Shrine
         opts[:project] = @project if @project
         opts[:credentials] = @credentials if @credentials
 
-        @storage = Google::Cloud::Storage.new(opts)
+        @storage = Google::Cloud::Storage.new(**opts)
       end
 
       def copyable?(io)
