@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+### Added
 - Allow an ACL to be specicied for an object (#45 by @ianks)
+
+### Fixed
+- Ruby 3.0 keyword arguments fixes (#46 by @sho918)
 
 ## 3.0.1 - 2020-04-02
 

@@ -45,14 +45,16 @@ class Shrine
           file
         else
           with_file(io) do |file|
-              get_bucket.create_file(
-                  file,
-                  object_name(id), # path
-                  **@object_options.merge(
-                      content_type: shrine_metadata["mime_type"],
-                      acl: options.fetch(:acl) { @default_acl }
-                  ).merge(options)
-              )
+            file_options = @object_options.merge(
+              content_type: shrine_metadata["mime_type"],
+              acl: options.fetch(:acl) { @default_acl }
+            ).merge(options)
+
+            get_bucket.create_file(
+                file,
+                object_name(id), # path
+                **file_options
+            )
           end
         end
       end
