@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## 3.1.0 - 2021-04-22
 
 ### Added
 - Allow an ACL to be specicied for an object (#45 by @ianks)
