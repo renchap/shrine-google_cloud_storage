@@ -10,7 +10,7 @@ class Shrine
       # Initialize a Shrine::Storage for GCS allowing for auto-discovery of the Google::Cloud::Storage client.
       # @param [String] project Provide if not using auto discovery
       # @see http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication#environmentvariables for information on discovery
-      def initialize(project: nil, bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {})
+      def initialize(project: nil, bucket:, prefix: nil, host: nil, default_acl: nil, object_options: {}, credentials: nil)
         @project = project
         @bucket = bucket
         @prefix = prefix
@@ -18,6 +18,7 @@ class Shrine
         @default_acl = default_acl
         @object_options = object_options
         @storage = nil
+        @credentials = credentials
       end
 
       # If the file is an UploadFile from GCS, issues a copy command, otherwise it uploads a file.
@@ -29,7 +30,7 @@ class Shrine
           file = existing_file.copy(
               @bucket, # dest_bucket_or_path - the bucket to copy the file to
               object_name(id), # dest_path - the path to copy the file to in the given bucket
-              acl: @default_acl
+              acl: options.fetch(:acl) { @default_acl }
           ) do |f|
             # Workaround a bug in File#copy where the content-type is not copied if you provide a block
             # See https://github.com/renchap/shrine-google_cloud_storage/issues/36
@@ -44,14 +45,16 @@ class Shrine
           file
         else
           with_file(io) do |file|
-              get_bucket.create_file(
-                  file,
-                  object_name(id), # path
-                  @object_options.merge(
-                      content_type: shrine_metadata["mime_type"],
-                      acl: @default_acl
-                  ).merge(options)
-              )
+            file_options = @object_options.merge(
+              content_type: shrine_metadata["mime_type"],
+              acl: options.fetch(:acl) { @default_acl }
+            ).merge(options)
+
+            get_bucket.create_file(
+                file,
+                object_name(id), # path
+                **file_options
+            )
           end
         end
       end
@@ -62,7 +65,7 @@ class Shrine
           host = @host || "storage.googleapis.com/#{@bucket}"
           "https://#{host}/#{object_name(id)}"
         else
-          signed_url = storage.signed_url(@bucket, object_name(id), options)
+          signed_url = storage.signed_url(@bucket, object_name(id), **options)
           signed_url.gsub!(/storage.googleapis.com\/#{@bucket}/, @host) if @host
           signed_url
         end
@@ -150,11 +153,13 @@ class Shrine
 
       # @see http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication
       def storage
-        @storage ||= if @project.nil?
-                       Google::Cloud::Storage.new
-                     else
-                       Google::Cloud::Storage.new(project: @project)
-                     end
+        return @storage if @storage
+
+        opts = {}
+        opts[:project] = @project if @project
+        opts[:credentials] = @credentials if @credentials
+
+        @storage = Google::Cloud::Storage.new(**opts)
       end
 
       def copyable?(io)
