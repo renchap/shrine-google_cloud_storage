@@ -67,7 +67,7 @@ class Shrine
           signed_url
         else
           host = @host || "storage.googleapis.com/#{@bucket}"
-          "https://#{host}/#{object_name(id)}"
+          "https://#{host}/#{URI.encode(object_name(id))}"
         end
       end
 
@@ -138,7 +138,7 @@ class Shrine
       end
 
       def object_name(id)
-        @prefix ? "#{@prefix}/#{URI.encode(id)}" : URI.encode(id)
+        @prefix ? "#{@prefix}/#{id}" : id
       end
 
       private
