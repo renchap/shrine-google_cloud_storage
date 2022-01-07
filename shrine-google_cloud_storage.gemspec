@@ -9,6 +9,13 @@ Gem::Specification.new do |gem|
   gem.authors      = ["Renaud Chaput"]
   gem.email        = ["renchap@gmail.com"]
   gem.license      = "MIT"
+  gem.metadata     = {
+                       "bug_tracker_uri"       => "https://github.com/renchap/shrine-google_cloud_storage/issues",
+                       "changelog_uri"         => "https://github.com/renchap/shrine-google_cloud_storage/blob/main/CHANGELOG.md",
+                       "homepage_uri"          => "https://github.com/renchap/shrine-google_cloud_storage/",
+                       "source_code_uri"       => "https://github.com/renchap/shrine-google_cloud_storage/",
+                       "rubygems_mfa_required" => "true",
+                     }
 
   gem.files        = Dir["README.md", "LICENSE.txt", "lib/**/*.rb", "shrine-google_cloud_storage.gemspec"]
   gem.require_path = "lib"
