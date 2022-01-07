@@ -67,7 +67,7 @@ class Shrine
           signed_url
         else
           host = @host || "storage.googleapis.com/#{@bucket}"
-          "https://#{host}/#{URI.encode(object_name(id))}"
+          "https://#{host}/#{URI.encode_www_form_component(object_name(id))}"
         end
       end
 
