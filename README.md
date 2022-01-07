@@ -12,7 +12,7 @@ gem "shrine-google_cloud_storage"
 
 ## Authentication
 
-The GCS plugin uses the `google-cloud-storage` gem. Please refer to [its documentation for setting up authentication](http://googleapis.github.io/google-cloud-ruby/docs/google-cloud-storage/latest/file.AUTHENTICATION.html).
+The GCS plugin uses the `google-cloud-storage` gem. Please refer to [its documentation for setting up authentication](https://googleapis.dev/ruby/google-cloud-storage/latest/file.AUTHENTICATION.html).
 
 ## Usage
 
@@ -65,7 +65,7 @@ cp .env.sample .env
 
 #### Option 2 - manual setup
 
-Create your own bucket and provide variables that allow for [project and credential lookup](http://googlecloudplatform.github.io/google-cloud-ruby/#/docs/google-cloud-storage/v1.6.0/guides/authentication#projectandcredentiallookup).
+Create your own bucket and provide variables that allow for [project and credential lookup](https://googleapis.dev/ruby/google-cloud-storage/latest/file.AUTHENTICATION.html#project-and-credential-lookup).
 For example:
 
 ```sh
