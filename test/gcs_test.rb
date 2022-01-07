@@ -288,10 +288,11 @@ wXh0ExlzwgD2xJ0=
     end
 
     it "encodes the filename in the URL" do
-      filename = generate_test_filename + "#test"
+      base_filename = generate_test_filename
+      filename = base_filename + "#test"
       gcs = gcs()
       url = gcs.url(filename)
-      assert_equal("https://storage.googleapis.com/#{gcs.bucket}/#{filename}%23test", url)
+      assert_equal("https://storage.googleapis.com/#{gcs.bucket}/#{base_filename}%23test", url)
     end
 
     it "accepts :host for specifying CDN links" do
