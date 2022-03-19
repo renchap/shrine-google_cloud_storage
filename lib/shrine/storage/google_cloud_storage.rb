@@ -64,7 +64,7 @@ class Shrine
       def url(id, **options)
         if @public || @default_acl == 'publicRead'
           host = @host || "storage.googleapis.com/#{@bucket}"
-          "https://#{host}/#{URI.encode_www_form_component(object_name(id))}"
+          "https://#{host}/#{URI.encode_www_form_component(object_name(id)).gsub("+", "%20")}"
         else
           signed_url = storage.signed_url(@bucket, object_name(id), **options)
           signed_url.gsub!(/storage.googleapis.com\/#{@bucket}/, @host) if @host
