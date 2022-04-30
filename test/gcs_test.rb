@@ -303,6 +303,14 @@ wXh0ExlzwgD2xJ0=
       url = gcs.url(filename)
       assert_equal("https://123.mycdn.net/#{filename}", url)
     end
+
+    it "provides an unsigned url when public: true option is present" do
+      filename = generate_test_filename
+
+      gcs = gcs()
+      url = gcs.url(filename, public: true)
+      assert_equal("https://storage.googleapis.com/#{gcs.bucket}/#{filename}", url)
+    end
   end
 
   describe '#upload' do
