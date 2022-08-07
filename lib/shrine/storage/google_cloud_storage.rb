@@ -61,13 +61,13 @@ class Shrine
 
       # URL to the remote file, accepts options for customizing the URL
       def url(id, **options)
-        if @default_acl == 'publicRead'
-          host = @host || "storage.googleapis.com/#{@bucket}"
-          "https://#{host}/#{URI.encode_www_form_component(object_name(id))}"
-        else
+        if options.key? :expires
           signed_url = storage.signed_url(@bucket, object_name(id), **options)
           signed_url.gsub!(/storage.googleapis.com\/#{@bucket}/, @host) if @host
           signed_url
+        else
+          host = @host || "storage.googleapis.com/#{@bucket}"
+          "https://#{host}/#{URI.encode_www_form_component(object_name(id))}"
         end
       end
 
