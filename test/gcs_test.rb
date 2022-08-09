@@ -102,6 +102,26 @@ wXh0ExlzwgD2xJ0=
     end
   end
 
+  describe "public" do
+    it "makes new objects public" do
+      filename = generate_test_filename
+
+      gcs = gcs(public: true)
+      gcs.upload(image, filename)
+
+      response = HTTP.head(gcs.url(filename))
+      assert_equal 200, response.code
+
+      assert @gcs.exists?(filename)
+    end
+
+    it "is not settable along with default_acl" do
+      assert_raises Shrine::Error do
+        gcs(public: true, default_acl: "test")
+      end
+    end
+  end
+
   describe "object_options" do
     it "does set the Cache-Control header when uploading a new object" do
       filename = generate_test_filename
