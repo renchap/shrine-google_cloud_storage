@@ -22,6 +22,7 @@ Gem::Specification.new do |gem|
 
   gem.add_dependency "shrine", "~> 3.0"
   gem.add_dependency "google-cloud-storage", "~> 1.6"
+  gem.add_dependency "addressable" # no version constraint to use the same as `google-cloud-storage`
 
   gem.add_development_dependency "rake"
   gem.add_development_dependency "minitest"

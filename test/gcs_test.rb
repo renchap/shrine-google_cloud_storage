@@ -315,6 +315,14 @@ wXh0ExlzwgD2xJ0=
       assert_equal("https://storage.googleapis.com/#{gcs.bucket}/#{base_filename}%23test", url)
     end
 
+    it "correctly generates URLs when there is a space in filename" do
+      base_filename = generate_test_filename
+      filename = base_filename + " test"
+      gcs = gcs()
+      url = gcs.url(filename)
+      assert_equal("https://storage.googleapis.com/#{gcs.bucket}/#{base_filename}%20test", url)
+    end
+
     it "accepts :host for specifying CDN links" do
       filename = generate_test_filename
 
