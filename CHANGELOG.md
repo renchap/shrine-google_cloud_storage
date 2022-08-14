@@ -6,7 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## 3.2.0 - 2022-01-07
+## 3.3.0 - 2022-08-14
 
 ### Added
 - `public` option on storage, which enabled the `publicRead` default ACL, as an easier way to create public objects
@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ### Fixes
 - Signed URLs were wrongly generated when `expires` was not provided
 - Fixed special character encoding in URLs (thanks @camiloforero)
+
+## 3.2.0 - 2022-01-07
 
 ### Added
 - Encode filenames in URIs (#47 by @vanboom)
